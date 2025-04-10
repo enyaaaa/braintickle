@@ -61,7 +61,7 @@
 
         function fetchQuestion() {
             document.getElementById('error').innerText = ''; // Clear previous errors
-            fetch(`/braintickle/getQuestion?questionId=${questionId}`)
+            fetch(`/braintickle-web/getQuestion?questionId=${questionId}`) // Updated to braintickle-web
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -73,15 +73,15 @@
                         document.getElementById('error').innerText = data.error;
                         return;
                     }
-                    // Display the question and options
+                    // Display the question and options, removing the "1) " prefixes
                     document.getElementById('question').innerText = data.question;
                     const optionsList = document.getElementById('options');
                     optionsList.innerHTML = ''; // Clear existing options
                     optionsList.innerHTML = `
-                        <div>1: ${data.option1}</div>
-                        <div>2: ${data.option2}</div>
-                        <div>3: ${data.option3}</div>
-                        <div>4: ${data.option4}</div>
+                        <div>1: ${data.option1.replace(/^\d+\)\s*/, '')}</div>
+                        <div>2: ${data.option2.replace(/^\d+\)\s*/, '')}</div>
+                        <div>3: ${data.option3.replace(/^\d+\)\s*/, '')}</div>
+                        <div>4: ${data.option4.replace(/^\d+\)\s*/, '')}</div>
                     `;
                 })
                 .catch(error => {
@@ -92,7 +92,7 @@
 
         function checkAnswer() {
             document.getElementById('error').innerText = ''; // Clear previous errors
-            fetch(`/braintickle/checkAnswer?player=${encodeURIComponent(player)}&questionId=${questionId}`)
+            fetch(`/braintickle-web/checkAnswer?player=${encodeURIComponent(player)}&questionId=${questionId}`) // Updated to braintickle-web
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -110,7 +110,7 @@
                         timeLeft = 30;
                         document.getElementById('timer').innerText = `Time: ${timeLeft}`;
                         document.getElementById('result').innerText = '';
-                        if (questionId <= 15) { // Assuming 15 questions in the database
+                        if (questionId <= 19) { // Updated to 19 questions
                             fetchQuestion();
                             startTimer();
                         } else {
