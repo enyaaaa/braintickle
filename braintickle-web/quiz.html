@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrainTickle</title>
+    <style>
+        #playerForm { margin-bottom: 20px; }
+        #timer { font-size: 24px; color: red; }
+        #question { font-size: 20px; }
+        #options { margin-top: 10px; }
+        #result { margin-top: 20px; }
+        #quizContainer { display: none; }
+        #error { color: red; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div id="playerForm">
+        <label for="playerName">Enter your name: </label>
+        <input type="text" id="playerName" placeholder="Your name">
+        <button onclick="startQuiz()">Start Quiz</button>
+    </div>
+
+    <div id="quizContainer">
+        <div id="timer">Time: 30</div>
+        <div id="question"></div>
+        <div id="options"></div>
+        <div id="result"></div>
+        <div id="error"></div>
+    </div>
+
+    <script>
+        let player = "";
+        let timeLeft = 30;
+        let questionId = 1;
+        let timer;
+
+        function startQuiz() {
+            player = document.getElementById('playerName').value.trim();
+            if (player === "") {
+                alert("Please enter your name!");
+                return;
+            }
+            document.getElementById('playerForm').style.display = 'none';
+            document.getElementById('quizContainer').style.display = 'block';
+            fetchQuestion();
+            startTimer();
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').innerText = `Time: ${timeLeft}`;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    checkAnswer();
+                }
+            }, 1000);
+        }
+
+        function fetchQuestion() {
+            document.getElementById('error').innerText = ''; // Clear previous errors
+            fetch(`/braintickle/getQuestion?questionId=${questionId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('error').innerText = data.error;
+                        return;
+                    }
+                    // Display the question and options
+                    document.getElementById('question').innerText = data.question;
+                    const optionsList = document.getElementById('options');
+                    optionsList.innerHTML = ''; // Clear existing options
+                    optionsList.innerHTML = `
+                        <div>1: ${data.option1}</div>
+                        <div>2: ${data.option2}</div>
+                        <div>3: ${data.option3}</div>
+                        <div>4: ${data.option4}</div>
+                    `;
+                })
+                .catch(error => {
+                    document.getElementById('error').innerText = 'Error fetching question: ' + error.message;
+                    console.error('Error fetching question:', error);
+                });
+        }
+
+        function checkAnswer() {
+            document.getElementById('error').innerText = ''; // Clear previous errors
+            fetch(`/braintickle/checkAnswer?player=${encodeURIComponent(player)}&questionId=${questionId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById('error').innerText = data.error;
+                        return;
+                    }
+                    document.getElementById('result').innerText = `You chose: ${data.playerAnswer} - ${data.result}`;
+                    setTimeout(() => {
+                        questionId++;
+                        timeLeft = 30;
+                        document.getElementById('timer').innerText = `Time: ${timeLeft}`;
+                        document.getElementById('result').innerText = '';
+                        if (questionId <= 15) { // Assuming 15 questions in the database
+                            fetchQuestion();
+                            startTimer();
+                        } else {
+                            document.getElementById('quizContainer').innerHTML = '<h2>Quiz Completed!</h2>';
+                        }
+                    }, 2000);
+                })
+                .catch(error => {
+                    document.getElementById('error').innerText = 'Error checking answer: ' + error.message;
+                    console.error('Error checking answer:', error);
+                });
+        }
+    </script>
+</body>
+</html>
