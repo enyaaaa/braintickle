@@ -21,6 +21,7 @@ import org.json.JSONObject;
 
 // Add the R import
 import com.example.braintickle.R;
+import android.util.Log;
 
 public class MainActivity extends AppCompatActivity {
     private String playerName = "";
@@ -30,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout playerInputLayout, answerLayout;
     private TextView feedbackText;
     private String selectedCategory = "";
+    private String correctAnswer;
 
 
     @Override
@@ -80,17 +82,20 @@ public class MainActivity extends AppCompatActivity {
 
     // Fetch question from the server
     private void fetchQuestion() {
+        Log.d("MainActivity", "Fetching question for category: " + selectedCategory); // Add this line
         new Thread(() -> {
             try {
                 // URL for fetching the question
                 String categoryParam = URLEncoder.encode(selectedCategory, "UTF-8");
-                URL url = new URL("http://10.0.2.2:8080/braintickle/getQuestionByCategory?category=" + categoryParam);
+                URL url = new URL("http://10.0.2.2:9999/braintickle/getQuestionByCategory?category=" + categoryParam);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
 
                 // Read response
                 BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 String response = reader.readLine();
+
+                Log.d("MainActivity", "Server Response: " + response);
                 reader.close();
 
                 // Assuming the response is JSON like:
@@ -104,6 +109,7 @@ public class MainActivity extends AppCompatActivity {
                         String optionB = jsonResponse.getString("option2");
                         String optionC = jsonResponse.getString("option3");
                         String optionD = jsonResponse.getString("option4");
+                        String correctAnswer = jsonResponse.getString("answer"); // Retrieve the correct answer
 
                         // Update UI with question and options
                         questionText.setText(question);
@@ -111,6 +117,8 @@ public class MainActivity extends AppCompatActivity {
                         btnB.setText(optionB);
                         btnC.setText(optionC);
                         btnD.setText(optionD);
+
+                        this.correctAnswer = correctAnswer;
 
                         // Hide feedback and next word button initially
                         feedbackText.setVisibility(View.GONE);
@@ -123,7 +131,8 @@ public class MainActivity extends AppCompatActivity {
                 });
                 conn.disconnect();
             } catch (Exception e) {
-                e.printStackTrace();
+                //e.printStackTrace();
+                Log.e("MainActivity", "Error during network request: " + e.getMessage(), e); // Add this line
                 runOnUiThread(() -> Toast.makeText(MainActivity.this, "Error fetching question: " + e.getMessage(), Toast.LENGTH_SHORT).show());
             }
         }).start();
@@ -131,44 +140,62 @@ public class MainActivity extends AppCompatActivity {
 
     private void submitAnswer(String answer) {
         new Thread(() -> {
-            try {
-                URL url = new URL("http://10.0.2.2:8080/braintickle/submitAnswer");
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setDoOutput(true);
-                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            runOnUiThread(() -> {
+                feedbackText.setVisibility(View.VISIBLE);
+                nextWordButton.setVisibility(View.VISIBLE);
 
-                String postData = "player=" + URLEncoder.encode(playerName, "UTF-8") +
-                        "&questionId=" + questionId +
-                        "&playerAnswer=" + URLEncoder.encode(answer, "UTF-8");
-
-                OutputStream os = conn.getOutputStream();
-                os.write(postData.getBytes());
-                os.flush();
-                os.close();
-
-                // Read response
-                BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                String response = reader.readLine();
-                reader.close();
-
-                conn.disconnect();
-
-                // Show response and move to next question
-                runOnUiThread(() -> {
-                    feedbackText.setVisibility(View.VISIBLE);
-                    nextWordButton.setVisibility(View.VISIBLE);
-                    feedbackText.setText(response);
-                    //Toast.makeText(MainActivity.this, response, Toast.LENGTH_SHORT).show();
-                });
-            } catch (Exception e) {
-                e.printStackTrace();
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-            }
+                if (answer.equals(this.correctAnswer)) {
+                    feedbackText.setText("Correct!");
+                    // Increment score here (you'll need to add a score variable)
+                } else {
+                    feedbackText.setText("Incorrect. The correct answer was option " + this.correctAnswer);
+                }
+            });
         }).start();
     }
+
+
+    //    private void submitAnswer(String answer) {
+//        new Thread(() -> {
+//            try {
+//                URL url = new URL("http://10.0.2.2:9999/braintickle/submitAnswer");
+//                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+//                conn.setRequestMethod("POST");
+//                conn.setDoOutput(true);
+//                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+//
+//                String postData = "player=" + URLEncoder.encode(playerName, "UTF-8") +
+//                        "&questionId=" + questionId +
+//                        "&playerAnswer=" + URLEncoder.encode(answer, "UTF-8");
+//
+//                OutputStream os = conn.getOutputStream();
+//                os.write(postData.getBytes());
+//                os.flush();
+//                os.close();
+//
+//                // Read response
+//                BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+//                String response = reader.readLine();
+//                reader.close();
+//
+//                conn.disconnect();
+//
+//                // Show response and move to next question
+//                runOnUiThread(() -> {
+//                    feedbackText.setVisibility(View.VISIBLE);
+//                    nextWordButton.setVisibility(View.VISIBLE);
+//                    feedbackText.setText(response);
+//                    //Toast.makeText(MainActivity.this, response, Toast.LENGTH_SHORT).show();
+//                });
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+//            }
+//        }).start();
+//    }
     private void setCategory(String category) {
         selectedCategory = category;
+        Log.d("MainActivity", "Category selected: " + category); // Add this line
         Toast.makeText(this, "Category selected: " + category, Toast.LENGTH_SHORT).show();
     }
 
