@@ -1,3 +1,17 @@
 <resources>
+    <string name="next_word_button">Next</string>
+    <string name="correct_feedback">Correct!</string>
+    <string name="start_quiz_button">Start Quiz</string>
+    <string name="button_A">A</string>
+    <string name="button_B">B</string>
+    <string name="button_C">C</string>
+    <string name="button_D">D</string>
+    <string name="empty_name_error">Please enter your name</string>
+    <string name="geography_button_text">Geography</string>
+    <string name="history_button_text">History</string>
+    <string name="math_button_text">Math</string>
+    <string name="science_button_text">Science</string>
+    <string name="general_button_text">General</string>
+    <string name="select_category_text">Select a Category</string>
     <string name="app_name">braintickle</string>
 </resources>

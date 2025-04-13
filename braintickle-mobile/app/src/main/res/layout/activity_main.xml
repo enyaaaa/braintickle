@@ -1,62 +1,221 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="16dp">
+    android:fillViewport="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        tools:context=".MainActivity">
+
+    <!-- Question Text -->
+    <TextView
+        android:id="@+id/questionText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:textColor="@color/textColor"
+        android:layout_marginTop="24dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:padding="16dp"/>
+
+    <LinearLayout
+        android:id="@+id/answerLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/questionText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="20dp">
+
+        <!-- Answer Options -->
+        <Button
+            android:id="@+id/btnA"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/button_A"
+            android:background="@color/buttonColor"
+            android:textColor="@color/buttonTextColor" />
+
+        <Button
+            android:id="@+id/btnB"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/button_B"
+            android:background="@color/buttonColor"
+            android:textColor="@color/buttonTextColor"/>
+
+        <Button
+            android:id="@+id/btnC"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/button_C"
+            android:background="@color/buttonColor"
+            android:textColor="@color/buttonTextColor"/>
+
+        <Button
+            android:id="@+id/btnD"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="@string/button_D"
+            android:background="@color/buttonColor"
+            android:textColor="@color/buttonTextColor"/>
+
+    </LinearLayout>
+
+<!-- Feedback Section -->
+    <TextView
+        android:id="@+id/feedbackText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/correct_feedback"
+        android:textSize="16sp"
+        android:textColor="@color/textColor"
+        android:visibility="gone"
+        android:layout_marginTop="20dp"
+        app:layout_constraintTop_toBottomOf="@id/answerLayout"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+<!-- Next Word Button -->
+    <Button
+        android:id="@+id/nextWordButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/next_word_button"
+        android:visibility="gone"
+        android:layout_marginTop="20dp"
+        app:layout_constraintTop_toBottomOf="@id/feedbackText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:background="@color/buttonColor"
+        android:textColor="@color/buttonTextColor"/>
+
+<!-- Player Input Section (initial state) -->
 
     <LinearLayout
         android:id="@+id/playerInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:visibility="visible">
+        android:visibility="visible"
+        app:layout_constraintTop_toBottomOf="@id/questionText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_editor_absoluteY="16dp">
 
         <EditText
             android:id="@+id/playerNameInput"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Enter your name"
-            android:inputType="textPersonName" />
+            android:hint="@string/empty_name_error"
+            android:importantForAccessibility="yes"
+            android:inputType="textPersonName"
+            android:minHeight="48dp"
+            android:padding="12dp"
+            android:textColor="@android:color/black"
+            app:layout_constraintTop_toBottomOf="@id/playerInputLayout"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp" />
+
+        <TextView
+            android:id="@+id/selectCategoryText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginBottom="8dp"
+            android:text="@string/select_category_text"
+            android:textSize="16sp"
+            android:textColor="@color/textColor"/>
+
+        <LinearLayout
+            android:id="@+id/categoryButtonsLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnGeneral"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:text="@string/general_button_text"
+                android:textColor="@color/buttonTextColor"
+                app:backgroundTint="@color/buttonColor" />
+
+            <Button
+                android:id="@+id/btnScience"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:text="@string/science_button_text"
+                android:textColor="@color/buttonTextColor"
+                app:backgroundTint="@color/buttonColor"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnHistory"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:text="@string/history_button_text"
+                app:backgroundTint="@color/buttonColor"
+                android:textColor="@color/buttonTextColor"/>
+
+            <Button
+                android:id="@+id/btnGeography"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:text="@string/geography_button_text"
+                app:backgroundTint="@color/buttonColor"
+                android:textColor="@color/buttonTextColor"/>
+
+            <Button
+                android:id="@+id/btnMath"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:text="@string/math_button_text"
+                app:backgroundTint="@color/buttonColor"
+                android:textColor="@color/buttonTextColor"/>
+        </LinearLayout>
 
         <Button
             android:id="@+id/startButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="Start Quiz" />
-    </LinearLayout>
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:text="@string/start_quiz_button"
+            android:background="@color/buttonColor"
+            android:textColor="@color/buttonTextColor"/>
+        </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/answerLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:visibility="gone">
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <Button
-            android:id="@+id/btnA"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="A" />
-
-        <Button
-            android:id="@+id/btnB"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="B" />
-
-        <Button
-            android:id="@+id/btnC"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="C" />
-
-        <Button
-            android:id="@+id/btnD"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="D" />
-    </LinearLayout>
-</LinearLayout>
+</ScrollView>
