@@ -19,6 +19,8 @@ public class SubmitAnswerServlet extends HttpServlet {
             return;
         }
 
+        String correctAnswerFromDB = null;
+
         try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/braintickle", "root", "MySecurePassword")) {
             String sql = "INSERT INTO playerAnswers (player, questionId, playerAnswer) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE playerAnswer = ?";
             PreparedStatement stmt = conn.prepareStatement(sql);
@@ -27,11 +29,25 @@ public class SubmitAnswerServlet extends HttpServlet {
             stmt.setString(3, playerAnswer);
             stmt.setString(4, playerAnswer);
             stmt.executeUpdate();
+
+            sql = "SELECT answer FROM questions WHERE id = ?";
+            stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, questionId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                correctAnswerFromDB = rs.getString("answer");
+            }
         } catch (SQLException e) {
             e.printStackTrace();
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write("Database error: " + e.getMessage());
             return;
+        }
+
+        String result = "Incorrect.";
+        // Assuming your 'answer' column in the 'questions' table stores the correct option (e.g., "A", "B", "C", "D")
+        if (correctAnswerFromDB != null && correctAnswerFromDB.trim().equalsIgnoreCase(playerAnswer.trim())) {
+            result = "Correct!";
         }
 
         response.getWriter().write("Answer received");

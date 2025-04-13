@@ -69,10 +69,10 @@ public class MainActivity extends AppCompatActivity {
             fetchQuestion();
         });
 
-        btnA.setOnClickListener(v -> submitAnswer("A"));
-        btnB.setOnClickListener(v -> submitAnswer("B"));
-        btnC.setOnClickListener(v -> submitAnswer("C"));
-        btnD.setOnClickListener(v -> submitAnswer("D"));
+        btnA.setOnClickListener(v -> submitAnswer("1"));
+        btnB.setOnClickListener(v -> submitAnswer("2"));
+        btnC.setOnClickListener(v -> submitAnswer("3"));
+        btnD.setOnClickListener(v -> submitAnswer("4"));
 
         // Next word button click handler
         nextWordButton.setOnClickListener(v -> fetchQuestion());
@@ -136,12 +136,16 @@ public class MainActivity extends AppCompatActivity {
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setDoOutput(true);
-                String data = "player=" + URLEncoder.encode(playerName, "UTF-8") +
+                conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+
+                String postData = "player=" + URLEncoder.encode(playerName, "UTF-8") +
                         "&questionId=" + questionId +
-                        "&playerAnswer=" + answer;
+                        "&playerAnswer=" + URLEncoder.encode(answer, "UTF-8");
+
                 OutputStream os = conn.getOutputStream();
-                os.write(data.getBytes());
+                os.write(postData.getBytes());
                 os.flush();
+                os.close();
 
                 // Read response
                 BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
