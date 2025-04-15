@@ -1,6 +1,7 @@
 package com.example.braintickle;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -17,15 +18,31 @@ import okhttp3.Response;
 public class MainActivity extends AppCompatActivity {
     private TextView sessionInfoText, questionTypeText, questionText, resultText;
     private Button optionA, optionB, optionC, optionD;
-    private final String player = "player_" + System.currentTimeMillis(); // Made final
-    private final int sessionId = 1; // Hardcoded for now
-    private final String SERVER_URL = "http://localhost:9999/braintickle/submitAnswer";
-    private final String DISPLAY_URL = "http://localhost:9999/braintickle/displayResults?sessionId=" + sessionId;
+//    private final String player = "player_" + System.currentTimeMillis(); // Made final
+private String playerName;
+
+    //    private final int sessionId = 1; // Hardcoded for now
+    private String sessionId;
+    private final String SERVER_URL = "http://10.0.2.2:9999/braintickle/submitAnswer";
+//    private final String DISPLAY_URL = "http://10.0.2.2:9999/braintickle/displayResults?sessionId=" + sessionId;
+
+//    String playerName = getIntent().getStringExtra("playerName");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        sessionId = getIntent().getStringExtra("sessionId");
+        playerName = getIntent().getStringExtra("playerName");
+        Log.d("DEBUG", "Received playerName: " + playerName);
+
+
+        if (sessionId == null || sessionId.isEmpty() || playerName == null || playerName.isEmpty()) {
+            Toast.makeText(this, "Invalid session or player name. Returning...", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         sessionInfoText = findViewById(R.id.sessionInfoText);
         questionTypeText = findViewById(R.id.questionTypeText);
@@ -36,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
         optionC = findViewById(R.id.optionC);
         optionD = findViewById(R.id.optionD);
 
+
+
         sessionInfoText.setText("Session ID: " + sessionId);
         loadQuestion();
 
@@ -43,9 +62,13 @@ public class MainActivity extends AppCompatActivity {
         optionB.setOnClickListener(v -> submitAnswer("B"));
         optionC.setOnClickListener(v -> submitAnswer("C"));
         optionD.setOnClickListener(v -> submitAnswer("D"));
+
     }
 
     private void loadQuestion() {
+        String DISPLAY_URL = "http://10.0.2.2:9999/braintickle/displayResults?sessionId=" + sessionId;
+        Log.d("DEBUG", "Loading question from: " + DISPLAY_URL);
+
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
                 .url(DISPLAY_URL)
@@ -80,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
     private void submitAnswer(String playerAnswer) {
         OkHttpClient client = new OkHttpClient();
         FormBody formBody = new FormBody.Builder()
-                .add("player", player)
+                .add("player", playerName)
                 .add("questionId", "1") // Should be dynamic based on session
                 .add("playerAnswer", playerAnswer)
                 .add("sessionId", String.valueOf(sessionId))
