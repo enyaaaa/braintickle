@@ -1,51 +1,87 @@
-import java.io.*;
-import jakarta.servlet.*;
-import jakarta.servlet.http.*;
-import java.sql.*;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 @WebServlet("/getQuestion")
 public class GetQuestionServlet extends HttpServlet {
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        int questionId;
-        try {
-            questionId = Integer.parseInt(request.getParameter("questionId"));
-        } catch (NumberFormatException e) {
-            response.setContentType("application/json");
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/braintickle";
+    private static final String DB_USER = "root"; // Replace with your MySQL username
+    private static final String DB_PASSWORD = "MySecurePassword"; // Replace with your MySQL password
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String sessionId = request.getParameter("sessionId");
+
+        if (sessionId == null || sessionId.trim().isEmpty()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            response.getWriter().write("{\"error\":\"Invalid questionId\"}");
+            response.getWriter().write("{\"error\":\"Missing sessionId\"}");
             return;
         }
 
-        String question = null;
-        String option1 = null, option2 = null, option3 = null, option4 = null;
+        try {
+            // Load the MySQL JDBC driver
+            Class.forName("com.mysql.cj.jdbc.Driver");
 
-        try (Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/braintickle", "root", "MySecurePassword")) {
-            String sql = "SELECT question, option1, option2, option3, option4 FROM questions WHERE id = ?";
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setInt(1, questionId);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                question = rs.getString("question");
-                option1 = rs.getString("option1");
-                option2 = rs.getString("option2");
-                option3 = rs.getString("option3");
-                option4 = rs.getString("option4");
-            } else {
-                response.setContentType("application/json");
-                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                response.getWriter().write("{\"error\":\"Question not found\"}");
-                return;
+            // Establish database connection
+            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+                // Get the current question ID from quizSessions
+                String getQuestionIdSql = "SELECT currentQuestionId FROM quizSessions WHERE id = ?";
+                Integer questionId = null;
+                try (PreparedStatement stmt = conn.prepareStatement(getQuestionIdSql)) {
+                    stmt.setString(1, sessionId);
+                    ResultSet rs = stmt.executeQuery();
+                    if (rs.next()) {
+                        questionId = rs.getInt("currentQuestionId");
+                        if (rs.wasNull()) {
+                            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                            response.getWriter().write("{\"error\":\"No current question set for session\"}");
+                            return;
+                        }
+                        System.out.println("Fetched currentQuestionId for session " + sessionId + ": " + questionId);
+                    } else {
+                        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                        response.getWriter().write("{\"error\":\"Session not found: " + sessionId + "\"}");
+                        return;
+                    }
+                }
+
+                // Fetch the question details
+                String getQuestionSql = "SELECT id, question, option1, option2, option3, option4, answer FROM questions WHERE id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(getQuestionSql)) {
+                    stmt.setInt(1, questionId);
+                    ResultSet rs = stmt.executeQuery();
+                    if (rs.next()) {
+                        String questionData = rs.getInt("id") + "|" +
+                                             rs.getString("question") + "|" +
+                                             rs.getString("option1") + "|" +
+                                             rs.getString("option2") + "|" +
+                                             rs.getString("option3") + "|" +
+                                             rs.getString("option4") + "|" +
+                                             rs.getInt("answer");
+                        response.setContentType("text/plain");
+                        response.getWriter().write(questionData);
+                    } else {
+                        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                        response.getWriter().write("{\"error\":\"Question not found for ID: " + questionId + "\"}");
+                    }
+                }
             }
+        } catch (ClassNotFoundException e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("{\"error\":\"Database driver not found: " + e.getMessage() + "\"}");
         } catch (SQLException e) {
-            e.printStackTrace();
-            response.setContentType("application/json");
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write("{\"error\":\"Database error: " + e.getMessage() + "\"}");
-            return;
         }
-
-        response.setContentType("application/json");
-        response.getWriter().write("{\"question\":\"" + (question != null ? question : "") + "\",\"option1\":\"" + (option1 != null ? option1 : "") + "\",\"option2\":\"" + (option2 != null ? option2 : "") + "\",\"option3\":\"" + (option3 != null ? option3 : "") + "\",\"option4\":\"" + (option4 != null ? option4 : "") + "\"}");
     }
 }
