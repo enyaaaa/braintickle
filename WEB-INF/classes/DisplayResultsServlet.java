@@ -39,9 +39,12 @@ public class DisplayResultsServlet extends HttpServlet {
                     ResultSet rs = stmt.executeQuery();
                     if (rs.next()) {
                         questionId = rs.getInt("currentQuestionId");
-                        if (rs.wasNull()) {
-                            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                            response.getWriter().write("{\"error\":\"No current question set for session\"}");
+                        if (questionId == null  || questionId == 0) {
+                            // response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                            // response.getWriter().write("{\"error\":\"No current question set for session\"}");
+                            // return;
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"message\":\"Waiting for teacher to start quiz.\"}");
                             return;
                         }
                     } else {

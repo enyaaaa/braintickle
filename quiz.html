@@ -125,10 +125,22 @@
         }
 
         async function startGame() {
-            document.getElementById('sessionInfo').classList.add('hidden');
-            await fetchQuestion();
+            try {
+        const response = await fetch(`http://localhost:9999/braintickle/nextQuestion?sessionId=${sessionId}`);
+        if (!response.ok) {
+            throw new Error(`Failed to start quiz: ${await response.text()}`);
         }
 
+        // Hide session info and load the first question
+        document.getElementById('sessionInfo').classList.add('hidden');
+        await fetchQuestion();
+    } catch (error) {
+        alert("Failed to start quiz: " + error.message);
+    }
+}
+        //document.getElementById('sessionInfo').classList.add('hidden');
+          //  await fetchQuestion();
+          
         async function fetchQuestion() {
             try {
                 const response = await fetch(`http://localhost:9999/braintickle/getQuestion?sessionId=${sessionId}`);

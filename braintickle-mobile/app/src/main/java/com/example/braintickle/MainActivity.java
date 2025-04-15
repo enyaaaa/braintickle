@@ -18,15 +18,10 @@ import okhttp3.Response;
 public class MainActivity extends AppCompatActivity {
     private TextView sessionInfoText, questionTypeText, questionText, resultText;
     private Button optionA, optionB, optionC, optionD;
-//    private final String player = "player_" + System.currentTimeMillis(); // Made final
-private String playerName;
-
-    //    private final int sessionId = 1; // Hardcoded for now
+    private String playerName;
     private String sessionId;
+    private String currentQuestionId;
     private final String SERVER_URL = "http://10.0.2.2:9999/braintickle/submitAnswer";
-//    private final String DISPLAY_URL = "http://10.0.2.2:9999/braintickle/displayResults?sessionId=" + sessionId;
-
-//    String playerName = getIntent().getStringExtra("playerName");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +30,7 @@ private String playerName;
 
         sessionId = getIntent().getStringExtra("sessionId");
         playerName = getIntent().getStringExtra("playerName");
+        Log.d("DEBUG", "Received sessionId: " + sessionId);
         Log.d("DEBUG", "Received playerName: " + playerName);
 
 
@@ -85,6 +81,27 @@ private String playerName;
                 String responseBody = response.body().string();
                 try {
                     JSONObject data = new JSONObject(responseBody);
+                    if (data.has("message")) {
+                        String message = data.getString("message");
+                        if (message.equals("Waiting for teacher to start quiz.")) {
+                            runOnUiThread(() -> {
+                                questionText.setText(message);
+                                questionTypeText.setText(""); // Clear old type
+                                optionA.setText("A:");
+                                optionB.setText("B:");
+                                optionC.setText("C:");
+                                optionD.setText("D:");
+                            });
+
+                            // 🔁 Retry after 3 seconds
+                            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
+                                    MainActivity.this::loadQuestion, 3000
+                            );
+                            return;
+                        }
+                    }
+                    currentQuestionId = data.optString("questionId");
+
                     runOnUiThread(() -> {
                         questionTypeText.setText(data.optString("questionType"));
                         questionText.setText(data.optString("question_text"));
@@ -101,13 +118,17 @@ private String playerName;
     }
 
     private void submitAnswer(String playerAnswer) {
+        if (currentQuestionId == null || currentQuestionId.isEmpty()) {
+            Toast.makeText(this, "No question loaded", Toast.LENGTH_SHORT).show();
+            return;
+        }
         OkHttpClient client = new OkHttpClient();
         FormBody formBody = new FormBody.Builder()
                 .add("player", playerName)
-                .add("questionId", "1") // Should be dynamic based on session
+                .add("questionId", currentQuestionId)// Should be dynamic based on session
                 .add("playerAnswer", playerAnswer)
                 .add("sessionId", String.valueOf(sessionId))
-                .build();
+                .build();            //    private final int sessionId = 1; // Hardcoded for now
 
         Request request = new Request.Builder()
                 .url(SERVER_URL)

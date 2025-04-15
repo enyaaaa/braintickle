@@ -37,34 +37,40 @@ public class GetQuestionByCategoryServlet extends HttpServlet {
             // Establish database connection
             try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
                 // Insert new session into quizSessions table
-                String insertSessionSql = "INSERT INTO quizSessions (id, currentQuestionId, status, created_at) VALUES (?, ?, 'active', ?)";
-                String selectFirstQuestionSql = "SELECT id FROM questions WHERE questionType = ? LIMIT 1";
-
-                // Fetch the first question ID for the category
-                int firstQuestionId;
-                try (PreparedStatement stmt = conn.prepareStatement(selectFirstQuestionSql)) {
-                    stmt.setString(1, category);
-                    ResultSet rs = stmt.executeQuery();
-                    if (rs.next()) {
-                        firstQuestionId = rs.getInt("id");
-                    } else {
-                        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                        response.getWriter().write("No questions found for category: " + category);
-                        return;
-                    }
-                }
-
-                // Insert the session with the first question ID
+                String insertSessionSql = "INSERT INTO quizSessions (id, currentQuestionId, status, created_at) VALUES (?, NULL, 'active', ?)";
+                //String selectFirstQuestionSql = "SELECT id FROM questions WHERE questionType = ? LIMIT 1";
                 try (PreparedStatement stmt = conn.prepareStatement(insertSessionSql)) {
                     stmt.setString(1, sessionId);
-                    stmt.setInt(2, firstQuestionId);
-                    stmt.setTimestamp(3, new Timestamp(System.currentTimeMillis()));
+                    stmt.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
                     stmt.executeUpdate();
                 }
 
+
+                // // Fetch the first question ID for the category
+                // int firstQuestionId;
+                // try (PreparedStatement stmt = conn.prepareStatement(selectFirstQuestionSql)) {
+                //     stmt.setString(1, category);
+                //     ResultSet rs = stmt.executeQuery();
+                //     if (rs.next()) {
+                //         firstQuestionId = rs.getInt("id");
+                //     } else {
+                //         response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                //         response.getWriter().write("No questions found for category: " + category);
+                //         return;
+                //     }
+                // }
+
+                // // Insert the session with the first question ID
+                // try (PreparedStatement stmt = conn.prepareStatement(insertSessionSql)) {
+                //     stmt.setString(1, sessionId);
+                //     stmt.setInt(2, firstQuestionId);
+                //     stmt.setTimestamp(3, new Timestamp(System.currentTimeMillis()));
+                //     stmt.executeUpdate();
+                // }
+
                 // Respond with success message
                 response.setContentType("text/plain");
-                response.getWriter().write("Session created successfully for category: " + category);
+                response.getWriter().write("Session created successfully. Waiting for teacher to start quiz.");
             }
         } catch (ClassNotFoundException e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
