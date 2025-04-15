@@ -1,10 +1,10 @@
-package com.example.braintickle;
-
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -13,100 +13,74 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @WebServlet("/displayResults")
 public class DisplayResultsServlet extends HttpServlet {
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/braintickle?useSSL=false";
-    private static final String DB_USER = "root";
-    private static final String DB_PASS = "your_password";
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/braintickle";
+    private static final String DB_USER = "root"; // Replace with your MySQL username
+    private static final String DB_PASSWORD = "MySecurePassword"; // Replace with your MySQL password
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("application/json");
-        int sessionId = Integer.parseInt(request.getParameter("sessionId"));
-        StringBuilder jsonResponse = new StringBuilder("{");
+        String sessionId = request.getParameter("sessionId");
+
+        if (sessionId == null || sessionId.trim().isEmpty()) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("{\"error\":\"Missing sessionId\"}");
+            return;
+        }
 
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
-
-            // Get current question from session
-            String sessionSql = "SELECT currentQuestionId FROM quizSessions WHERE id = ?";
-            PreparedStatement sessionStmt = conn.prepareStatement(sessionSql);
-            sessionStmt.setInt(1, sessionId);
-            ResultSet sessionRs = sessionStmt.executeQuery();
-            int questionId = 1;
-            if (sessionRs.next()) {
-                questionId = sessionRs.getInt("currentQuestionId");
-            }
-
-            // Get question details
-            String questionSql = "SELECT questionType, question, image, option1, option2, option3, option4, answer FROM questions WHERE id = ?";
-            PreparedStatement questionStmt = conn.prepareStatement(questionSql);
-            questionStmt.setInt(1, questionId);
-            ResultSet questionRs = questionStmt.executeQuery();
-            if (questionRs.next()) {
-                jsonResponse.append("\"questionType\":\"").append(questionRs.getString("questionType")).append("\",");
-                jsonResponse.append("\"question_text\":\"").append(questionRs.getString("question")).append("\",");
-                jsonResponse.append("\"image\":\"").append(questionRs.getString("image")).append("\",");
-                jsonResponse.append("\"option1\":\"").append(questionRs.getString("option1")).append("\",");
-                jsonResponse.append("\"option2\":\"").append(questionRs.getString("option2")).append("\",");
-                jsonResponse.append("\"option3\":\"").append(questionRs.getString("option3")).append("\",");
-                jsonResponse.append("\"option4\":\"").append(questionRs.getString("option4")).append("\",");
-                jsonResponse.append("\"answer\":\"").append(questionRs.getString("answer")).append("\"");
-            } else {
-                jsonResponse.append("\"error\":\"Question not found\"");
-            }
-
-            // Get player answers
-            String answerSql = "SELECT player, playerAnswer, score FROM playerAnswers WHERE questionId = ? AND sessionId = ?";
-            PreparedStatement answerStmt = conn.prepareStatement(answerSql);
-            answerStmt.setInt(1, questionId);
-            answerStmt.setInt(2, sessionId);
-            ResultSet answerRs = answerStmt.executeQuery();
-            jsonResponse.append(",\"answers\":[");
-            boolean firstAnswer = true;
-            while (answerRs.next()) {
-                if (!firstAnswer) {
-                    jsonResponse.append(",");
+            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+                // Get the current question for the session
+                String sessionSql = "SELECT currentQuestionId FROM quizSessions WHERE id = ? AND status = 'active'";
+                Integer questionId = null;
+                try (PreparedStatement stmt = conn.prepareStatement(sessionSql)) {
+                    stmt.setString(1, sessionId);
+                    ResultSet rs = stmt.executeQuery();
+                    if (rs.next()) {
+                        questionId = rs.getInt("currentQuestionId");
+                        if (rs.wasNull()) {
+                            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                            response.getWriter().write("{\"error\":\"No current question set for session\"}");
+                            return;
+                        }
+                    } else {
+                        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                        response.getWriter().write("{\"error\":\"Session not found or not active: " + sessionId + "\"}");
+                        return;
+                    }
                 }
-                jsonResponse.append("{");
-                jsonResponse.append("\"player\":\"").append(answerRs.getString("player")).append("\",");
-                jsonResponse.append("\"playerAnswer\":\"").append(answerRs.getString("playerAnswer")).append("\",");
-                jsonResponse.append("\"score\":").append(answerRs.getInt("score"));
-                jsonResponse.append("}");
-                firstAnswer = false;
-            }
-            jsonResponse.append("]");
 
-            // Get leaderboard
-            String leaderboardSql = "SELECT player, SUM(score) as totalScore FROM playerAnswers WHERE sessionId = ? GROUP BY player ORDER BY totalScore DESC";
-            PreparedStatement leaderboardStmt = conn.prepareStatement(leaderboardSql);
-            leaderboardStmt.setInt(1, sessionId);
-            ResultSet leaderboardRs = leaderboardStmt.executeQuery();
-            jsonResponse.append(",\"leaderboard\":[");
-            boolean firstEntry = true;
-            while (leaderboardRs.next()) {
-                if (!firstEntry) {
-                    jsonResponse.append(",");
+                // Fetch the current question details
+                String questionSql = "SELECT questionType, question, option1, option2, option3, option4 FROM questions WHERE id = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(questionSql)) {
+                    stmt.setInt(1, questionId);
+                    ResultSet rs = stmt.executeQuery();
+                    if (rs.next()) {
+                        String jsonResponse = String.format(
+                            "{\"questionId\":%d,\"questionType\":\"%s\",\"question_text\":\"%s\",\"option1\":\"%s\",\"option2\":\"%s\",\"option3\":\"%s\",\"option4\":\"%s\"}",
+                            questionId,
+                            rs.getString("questionType"),
+                            rs.getString("question"),
+                            rs.getString("option1"),
+                            rs.getString("option2"),
+                            rs.getString("option3"),
+                            rs.getString("option4")
+                        );
+                        response.setContentType("application/json");
+                        response.getWriter().write(jsonResponse);
+                    } else {
+                        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                        response.getWriter().write("{\"error\":\"Question not found for ID: " + questionId + "\"}");
+                    }
                 }
-                jsonResponse.append("{");
-                jsonResponse.append("\"player\":\"").append(leaderboardRs.getString("player")).append("\",");
-                jsonResponse.append("\"totalScore\":").append(leaderboardRs.getInt("totalScore"));
-                jsonResponse.append("}");
-                firstEntry = false;
             }
-            jsonResponse.append("]");
-
-            sessionStmt.close();
-            questionStmt.close();
-            answerStmt.close();
-            leaderboardStmt.close();
-            conn.close();
-
-            jsonResponse.append("}");
-            response.getWriter().write(jsonResponse.toString());
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.getWriter().write("{\"error\":\"" + e.getMessage() + "\"}");
+        } catch (ClassNotFoundException e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("{\"error\":\"Database driver not found: " + e.getMessage() + "\"}");
+        } catch (SQLException e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("{\"error\":\"Database error: " + e.getMessage() + "\"}");
         }
     }
 }
