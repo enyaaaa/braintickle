@@ -6,62 +6,159 @@
     <title>BrainTickle - Quiz</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #EEF1DA;
+            background: #ffffff;
             color: #333;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         .container {
-            max-width: 800px;
-            margin: 0 auto;
+            max-width: 900px;
+            margin: 20px;
             padding: 20px;
+            position: relative;
             text-align: center;
         }
-        h1 {
-            color: #ADB2D4;
-        }
-        .category-selection, .session-info, .question-display, .leaderboard {
-            background-color: #C7D9DD;
-            padding: 20px;
-            border-radius: 10px;
+        .logo {
+            max-width: 150px;
             margin-bottom: 20px;
         }
+        .score {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 18px;
+            color: #666;
+        }
+        h1 {
+            color: #666;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #666;
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+        .category-selection, .session-info, .question-display, .leaderboard {
+            background: #fff;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
         button {
-            background-color: #D5E5D5;
+            background: #ff6f91;
             border: none;
-            padding: 10px 20px;
+            padding: 12px 25px;
             font-size: 16px;
+            font-weight: bold;
+            color: #fff;
             cursor: pointer;
-            border-radius: 5px;
-            margin: 5px;
+            border-radius: 25px;
+            margin: 8px;
+            transition: background 0.3s ease;
         }
         button:hover {
-            background-color: #ADB2D4;
-            color: white;
+            background: #ff4d73;
+        }
+        .timer-container {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 20px auto;
+        }
+        .timer-circle {
+            width: 100%;
+            height: 100%;
+            border: 8px solid #ff6f91;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
         #timer {
             font-size: 24px;
-            color: #ADB2D4;
-            margin: 10px 0;
+            font-weight: bold;
+            color: #333;
+        }
+        .question-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+        }
+        .question-text {
+            font-size: 24px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .options div {
+            padding: 15px;
+            border-radius: 25px;
+            font-size: 18px;
+            color: #333;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            text-align: center;
+        }
+        .options div:hover {
+            opacity: 0.9;
+        }
+        .option1 { background: #B5C0D0; }
+        .option2 { background: #CCD3CA; }
+        .option3 { background: #F5E8DD; }
+        .option4 { background: #EED3D9; }
+        .question-number {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            color: #666;
         }
         .hidden {
             display: none;
         }
-        .options {
-            margin-top: 20px;
+        .leaderboard ul {
+            list-style: none;
+            padding: 0;
         }
-        .options div {
-            margin: 10px 0;
+        .leaderboard li {
+            background: #f0f0f0;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .leaderboard li.current-player {
+            background: #ff6f91;
+            color: #fff;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>BrainTickle</h1>
-
         <!-- Category Selection -->
         <div id="categorySelection" class="category-selection">
+            <img src="logo.png" alt="BrainTickle Logo" class="logo">
+            <h1>BrainTickle</h1>
             <h2>Select a Category</h2>
             <button onclick="startSession('math')">Math</button>
             <button onclick="startSession('science')">Science</button>
@@ -77,15 +174,24 @@
 
         <!-- Question Display -->
         <div id="questionDisplay" class="question-display hidden">
-            <h2>Question <span id="questionNumber"></span></h2>
-            <p id="questionText"></p>
-            <div class="options">
-                <div id="option1"></div>
-                <div id="option2"></div>
-                <div id="option3"></div>
-                <div id="option4"></div>
+            <img src="logo.png" alt="BrainTickle Logo" class="logo">
+            <div class="score">Score: <span id="score">0</span></div>
+            <h1>BrainTickle</h1>
+            <div class="timer-container">
+                <div class="timer-circle">
+                    <span id="timer">10</span>
+                </div>
             </div>
-            <div id="timer">Time: <span id="timeLeft">10</span>s</div>
+            <div class="question-card">
+                <div class="question-text" id="questionText"></div>
+                <div class="options">
+                    <div id="option1" class="option1" onclick="submitAnswer('A')"></div>
+                    <div id="option2" class="option2" onclick="submitAnswer('B')"></div>
+                    <div id="option3" class="option3" onclick="submitAnswer('C')"></div>
+                    <div id="option4" class="option4" onclick="submitAnswer('D')"></div>
+                </div>
+            </div>
+            <div class="question-number">Question <span id="questionNumber"></span></div>
             <button onclick="showLeaderboard()" id="nextButton" class="hidden">Next Question</button>
         </div>
 
@@ -93,6 +199,7 @@
         <div id="leaderboard" class="leaderboard hidden">
             <h2>Leaderboard</h2>
             <ul id="leaderboardList"></ul>
+            <button onclick="toggleLeaderboard()" id="hideButton">Hide Leaderboard</button>
             <button onclick="nextQuestion()" id="continueButton">Continue</button>
             <button onclick="endSession()" id="endButton" class="hidden">End Session</button>
         </div>
@@ -103,6 +210,11 @@
         let currentQuestion = 1;
         let totalQuestions = 5;
         let timerInterval;
+        let score = 0;
+        let leaderboardData = [];
+        let pollingInterval;
+        let isLeaderboardVisible = false;
+        const currentPlayer = "Player 1"; // Mock current player
 
         async function startSession(category) {
             sessionId = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -126,21 +238,17 @@
 
         async function startGame() {
             try {
-        const response = await fetch(`http://localhost:9999/braintickle/nextQuestion?sessionId=${sessionId}`);
-        if (!response.ok) {
-            throw new Error(`Failed to start quiz: ${await response.text()}`);
+                const response = await fetch(`http://localhost:9999/braintickle/nextQuestion?sessionId=${sessionId}`);
+                if (!response.ok) {
+                    throw new Error(`Failed to start quiz: ${await response.text()}`);
+                }
+                document.getElementById('sessionInfo').classList.add('hidden');
+                await fetchQuestion();
+            } catch (error) {
+                alert("Failed to start quiz: " + error.message);
+            }
         }
 
-        // Hide session info and load the first question
-        document.getElementById('sessionInfo').classList.add('hidden');
-        await fetchQuestion();
-    } catch (error) {
-        alert("Failed to start quiz: " + error.message);
-    }
-}
-        //document.getElementById('sessionInfo').classList.add('hidden');
-          //  await fetchQuestion();
-          
         async function fetchQuestion() {
             try {
                 const response = await fetch(`http://localhost:9999/braintickle/getQuestion?sessionId=${sessionId}`);
@@ -152,18 +260,18 @@
 
                 document.getElementById('questionNumber').textContent = currentQuestion;
                 document.getElementById('questionText').textContent = question;
-                document.getElementById('option1').textContent = `1. ${option1}`;
-                document.getElementById('option2').textContent = `2. ${option2}`;
-                document.getElementById('option3').textContent = `3. ${option3}`;
-                document.getElementById('option4').textContent = `4. ${option4}`;
+                document.getElementById('option1').textContent = `A. ${option1}`;
+                document.getElementById('option2').textContent = `B. ${option2}`;
+                document.getElementById('option3').textContent = `C. ${option3}`;
+                document.getElementById('option4').textContent = `D. ${option4}`;
                 document.getElementById('questionDisplay').classList.remove('hidden');
 
                 // Start timer
                 let timeLeft = 10;
-                document.getElementById('timeLeft').textContent = timeLeft;
+                document.getElementById('timer').textContent = timeLeft;
                 timerInterval = setInterval(async () => {
                     timeLeft--;
-                    document.getElementById('timeLeft').textContent = timeLeft;
+                    document.getElementById('timer').textContent = timeLeft;
                     if (timeLeft <= 0) {
                         clearInterval(timerInterval);
                         document.getElementById('nextButton').classList.remove('hidden');
@@ -175,33 +283,85 @@
             }
         }
 
+        async function submitAnswer(answer) {
+            try {
+                const response = await fetch(`http://localhost:9999/braintickle/submitAnswer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `player=${currentPlayer}&questionId=${currentQuestion}&playerAnswer=${answer}&sessionId=${sessionId}`
+                });
+                if (!response.ok) {
+                    throw new Error(`Failed to submit answer: ${await response.text()}`);
+                }
+                const result = await response.text();
+                console.log("Answer submission response:", result);
+
+                // Update score (mock scoring: +100 for each answer)
+                score += 100;
+                document.getElementById('score').textContent = score;
+
+                clearInterval(timerInterval);
+                document.getElementById('nextButton').classList.remove('hidden');
+            } catch (error) {
+                console.error("Error submitting answer:", error);
+                alert("Failed to submit answer: " + error.message);
+            }
+        }
+
         async function showLeaderboard() {
             clearInterval(timerInterval);
             document.getElementById('questionDisplay').classList.add('hidden');
             document.getElementById('leaderboard').classList.remove('hidden');
+            isLeaderboardVisible = true;
 
+            await fetchLeaderboard();
+
+            // Start polling for leaderboard updates
+            pollingInterval = setInterval(fetchLeaderboard, 5000); // Poll every 5 seconds
+
+            if (currentQuestion === totalQuestions) {
+                document.getElementById('continueButton').classList.add('hidden');
+                document.getElementById('endButton').classList.remove('hidden');
+                clearInterval(pollingInterval); // Stop polling at session end
+            }
+        }
+
+        async function fetchLeaderboard() {
             try {
-                const response = await fetch(`http://localhost:9999/braintickle/getLeaderboard?sessionId=${sessionId}`);
+                const response = await fetch(`http://localhost:9999/getLeaderboard?sessionId=${sessionId}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
                 }
-                const leaderboardData = await response.text();
-                const leaderboard = leaderboardData.split('|').map(entry => {
-                    const [player, score] = entry.split(':');
-                    return { player, score: parseInt(score) };
-                });
+                const leaderboardDataServer = await response.text();
+                if (leaderboardDataServer === "No scores yet") {
+                    leaderboardData = [];
+                } else {
+                    leaderboardData = leaderboardDataServer.split('|').map(entry => {
+                        const [player, score] = entry.split(':');
+                        return { player, score: parseInt(score) };
+                    });
+                }
 
                 const leaderboardList = document.getElementById('leaderboardList');
                 leaderboardList.innerHTML = '';
-                leaderboard.forEach(entry => {
+                if (leaderboardData.length === 0) {
                     const li = document.createElement('li');
-                    li.textContent = `${entry.player}: ${entry.score}`;
+                    li.textContent = "No scores yet";
                     leaderboardList.appendChild(li);
-                });
-
-                if (currentQuestion === totalQuestions) {
-                    document.getElementById('continueButton').classList.add('hidden');
-                    document.getElementById('endButton').classList.remove('hidden');
+                } else {
+                    leaderboardData.forEach(entry => {
+                        const li = document.createElement('li');
+                        const playerSpan = document.createElement('span');
+                        playerSpan.textContent = entry.player;
+                        const scoreSpan = document.createElement('span');
+                        scoreSpan.textContent = entry.score;
+                        li.appendChild(playerSpan);
+                        li.appendChild(scoreSpan);
+                        if (entry.player === currentPlayer) {
+                            li.classList.add('current-player');
+                        }
+                        leaderboardList.appendChild(li);
+                    });
                 }
             } catch (error) {
                 console.error("Error fetching leaderboard:", error);
@@ -209,9 +369,28 @@
             }
         }
 
+        function toggleLeaderboard() {
+            if (isLeaderboardVisible) {
+                document.getElementById('leaderboard').classList.add('hidden');
+                document.getElementById('questionDisplay').classList.remove('hidden');
+                document.getElementById('hideButton').textContent = "Show Leaderboard";
+                isLeaderboardVisible = false;
+                clearInterval(pollingInterval);
+            } else {
+                document.getElementById('questionDisplay').classList.add('hidden');
+                document.getElementById('leaderboard').classList.remove('hidden');
+                document.getElementById('hideButton').textContent = "Hide Leaderboard";
+                isLeaderboardVisible = true;
+                fetchLeaderboard();
+                pollingInterval = setInterval(fetchLeaderboard, 5000);
+            }
+        }
+
         async function nextQuestion() {
             currentQuestion++;
+            clearInterval(pollingInterval);
             document.getElementById('leaderboard').classList.add('hidden');
+            isLeaderboardVisible = false;
             if (currentQuestion <= totalQuestions) {
                 try {
                     const response = await fetch(`http://localhost:9999/braintickle/nextQuestion?sessionId=${sessionId}`);
@@ -227,6 +406,7 @@
         }
 
         function endSession() {
+            clearInterval(pollingInterval);
             alert('Session Ended! Final Leaderboard Displayed.');
             location.reload();
         }

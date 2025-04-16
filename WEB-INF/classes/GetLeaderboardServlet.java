@@ -15,21 +15,33 @@ import jakarta.servlet.http.HttpServletResponse;
 public class GetLeaderboardServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        System.out.println("GetLeaderboardServlet initialized");
+    }
+
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        System.out.println("Received request for /getLeaderboard");
         String sessionId = request.getParameter("sessionId");
         response.setContentType("text/plain");
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        response.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
         try {
+            System.out.println("Loading MySQL driver...");
             Class.forName("com.mysql.cj.jdbc.Driver");
+            System.out.println("Connecting to database...");
             Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/braintickle", "root", "MySecurePassword");
+            System.out.println("Database connection established");
 
-            // Calculate scores: 100 points for each correct answer
+            // Count correct answers (isCorrect = 1) per player for the session
             PreparedStatement stmt = conn.prepareStatement(
-                "SELECT pa.player, COUNT(*) as score " +
-                "FROM playerAnswers pa " +
-                "JOIN questions q ON pa.questionId = q.id " +
-                "WHERE pa.sessionId = ? AND pa.playerAnswer = q.answer " +
-                "GROUP BY pa.player " +
+                "SELECT player, COUNT(*) as score " +
+                "FROM playerAnswers " +
+                "WHERE sessionId = ? AND isCorrect = 1 " +
+                "GROUP BY player " +
                 "ORDER BY score DESC"
             );
             stmt.setString(1, sessionId);
@@ -38,7 +50,7 @@ public class GetLeaderboardServlet extends HttpServlet {
             StringBuilder leaderboard = new StringBuilder();
             while (rs.next()) {
                 String player = rs.getString("player");
-                int score = rs.getInt("score") * 100;
+                int score = rs.getInt("score") * 100; // 100 points per correct answer
                 if (leaderboard.length() > 0) {
                     leaderboard.append("|");
                 }
@@ -49,7 +61,8 @@ public class GetLeaderboardServlet extends HttpServlet {
             conn.close();
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error fetching leaderboard");
+            System.out.println("Error in GetLeaderboardServlet: " + e.getMessage());
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error fetching leaderboard: " + e.getMessage());
         }
     }
 }

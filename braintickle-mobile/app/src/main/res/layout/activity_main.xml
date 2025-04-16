@@ -25,6 +25,15 @@
         android:layout_marginBottom="10dp"/>
 
     <TextView
+        android:id="@+id/sessionStatusText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textSize="18sp"
+        android:textColor="#FFb8b2c3"
+        android:layout_marginBottom="10dp"/>
+
+    <TextView
         android:id="@+id/questionTypeText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -83,6 +92,23 @@
         android:text="D: Loading..."
         android:backgroundTint="#FFdfe5d9"
         android:textColor="#FF333333"
+        android:layout_marginBottom="10dp"/>
+
+    <Button
+        android:id="@+id/showLeaderboardButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Show Leaderboard"
+        android:backgroundTint="#FFff6f91"
+        android:textColor="#FFFFFFFF"
+        android:layout_marginBottom="10dp"
+        android:visibility="gone"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/leaderboardRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
         android:layout_marginBottom="10dp"/>
 
     <TextView
