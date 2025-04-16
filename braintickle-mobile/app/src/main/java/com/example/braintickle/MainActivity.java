@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean isLeaderboardVisible = false;
     private final String SERVER_URL = "http://10.0.2.2:9999/braintickle/submitAnswer";
     private final String DISPLAY_URL = "http://10.0.2.2:9999/braintickle/displayResults?sessionId=";
-    private final String LEADERBOARD_URL = "http://10.0.2.2:9999/getLeaderboard?sessionId=";
+    private final String LEADERBOARD_URL = "http://10.0.2.2:9999/braintickle/getLeaderboard?sessionId=";
     private OkHttpClient client;
     private Handler leaderboardHandler;
     private Runnable leaderboardRunnable;
@@ -267,13 +267,13 @@ public class MainActivity extends AppCompatActivity {
             leaderboardRecyclerView.setVisibility(View.GONE);
             showLeaderboardButton.setText("Show Leaderboard");
             isLeaderboardVisible = false;
-            leaderboardHandler.removeCallbacks(leaderboardRunnable);
+            leaderboardHandler.removeCallbacks(leaderboardRunnable); // Fixed typo
         } else {
             leaderboardRecyclerView.setVisibility(View.VISIBLE);
             showLeaderboardButton.setText("Hide Leaderboard");
             isLeaderboardVisible = true;
             fetchLeaderboard();
-            leaderboardHandler.post(leaderboardRunnable); // Start polling
+            leaderboardHandler.post(leaderboardRunnable); // Fixed typo
         }
     }
 
