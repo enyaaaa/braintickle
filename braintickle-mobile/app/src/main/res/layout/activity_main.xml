@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="#ffffff"
+    android:background="#FFFFFFFF"
     android:gravity="center">
 
     <TextView
@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:text="BrainTickle"
         android:textSize="32sp"
-        android:textColor="#8ea1b5"
+        android:textColor="#FF8ea1b5"
         android:layout_marginBottom="20dp"/>
 
     <TextView
@@ -21,7 +21,7 @@
         android:layout_height="wrap_content"
         android:text="Session ID: 1"
         android:textSize="18sp"
-        android:textColor="#b8b2c3"
+        android:textColor="#FFb8b2c3"
         android:layout_marginBottom="10dp"/>
 
     <TextView
@@ -30,7 +30,7 @@
         android:layout_height="wrap_content"
         android:text="General Knowledge"
         android:textSize="18sp"
-        android:textColor="#b8b2c3"
+        android:textColor="#FFb8b2c3"
         android:layout_marginBottom="10dp"/>
 
     <TextView
@@ -39,7 +39,7 @@
         android:layout_height="wrap_content"
         android:text="Loading..."
         android:textSize="24sp"
-        android:textColor="#333"
+        android:textColor="#FF333333"
         android:layout_marginBottom="10dp"/>
 
     <ImageView
@@ -54,8 +54,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="A: Loading..."
-        android:backgroundTint="#b8b2c3"
-        android:textColor="#333"
+        android:backgroundTint="#FFb8b2c3"
+        android:textColor="#FF333333"
         android:layout_marginBottom="10dp"/>
 
     <Button
@@ -63,8 +63,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="B: Loading..."
-        android:backgroundTint="#c49ba3"
-        android:textColor="#333"
+        android:backgroundTint="#FFc49ba3"
+        android:textColor="#FF333333"
         android:layout_marginBottom="10dp"/>
 
     <Button
@@ -72,8 +72,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="C: Loading..."
-        android:backgroundTint="#b3c2a1"
-        android:textColor="#333"
+        android:backgroundTint="#FFb3c2a1"
+        android:textColor="#FF333333"
         android:layout_marginBottom="10dp"/>
 
     <Button
@@ -81,8 +81,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="D: Loading..."
-        android:backgroundTint="#dfe5d9"
-        android:textColor="#333"
+        android:backgroundTint="#FFdfe5d9"
+        android:textColor="#FF333333"
         android:layout_marginBottom="10dp"/>
 
     <TextView
@@ -91,5 +91,5 @@
         android:layout_height="wrap_content"
         android:text=""
         android:textSize="18sp"
-        android:textColor="#333"/>
+        android:textColor="#FF333333"/>
 </LinearLayout>

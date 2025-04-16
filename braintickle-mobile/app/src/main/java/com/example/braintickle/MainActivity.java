@@ -14,6 +14,8 @@ import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.WebSocket;
+import okhttp3.WebSocketListener;
 
 public class MainActivity extends AppCompatActivity {
     private TextView sessionInfoText, questionTypeText, questionText, resultText;
@@ -22,6 +24,9 @@ public class MainActivity extends AppCompatActivity {
     private String sessionId;
     private String currentQuestionId;
     private final String SERVER_URL = "http://10.0.2.2:9999/braintickle/submitAnswer";
+    private final String WEBSOCKET_URL = "ws://10.0.2.2:9999/braintickle/quizSocket/";
+    private WebSocket webSocket;
+    private OkHttpClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,7 +37,6 @@ public class MainActivity extends AppCompatActivity {
         playerName = getIntent().getStringExtra("playerName");
         Log.d("DEBUG", "Received sessionId: " + sessionId);
         Log.d("DEBUG", "Received playerName: " + playerName);
-
 
         if (sessionId == null || sessionId.isEmpty() || playerName == null || playerName.isEmpty()) {
             Toast.makeText(this, "Invalid session or player name. Returning...", Toast.LENGTH_SHORT).show();
@@ -49,16 +53,99 @@ public class MainActivity extends AppCompatActivity {
         optionC = findViewById(R.id.optionC);
         optionD = findViewById(R.id.optionD);
 
-
-
         sessionInfoText.setText("Session ID: " + sessionId);
+
+        // Initialize WebSocket
+        client = new OkHttpClient();
+        connectWebSocket();
+
+        // Fallback to polling if WebSocket fails
         loadQuestion();
 
         optionA.setOnClickListener(v -> submitAnswer("A"));
         optionB.setOnClickListener(v -> submitAnswer("B"));
         optionC.setOnClickListener(v -> submitAnswer("C"));
         optionD.setOnClickListener(v -> submitAnswer("D"));
+    }
 
+    private void connectWebSocket() {
+        String wsUrl = WEBSOCKET_URL + sessionId + "/" + playerName;
+        Log.d("DEBUG", "Connecting to WebSocket: " + wsUrl);
+
+        Request request = new Request.Builder()
+                .url(wsUrl)
+                .build();
+
+        webSocket = client.newWebSocket(request, new WebSocketListener() {
+            @Override
+            public void onOpen(WebSocket webSocket, Response response) {
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "WebSocket connected", Toast.LENGTH_SHORT).show());
+                Log.d("DEBUG", "WebSocket connected");
+            }
+
+            @Override
+            public void onMessage(WebSocket webSocket, String text) {
+                Log.d("DEBUG", "WebSocket message received: " + text);
+                try {
+                    JSONObject data = new JSONObject(text);
+                    String event = data.optString("event");
+
+                    switch (event) {
+                        case "quizStarted":
+                            runOnUiThread(() -> resultText.setText("Quiz has started!"));
+                            break;
+
+                        case "questionFetched":
+                            currentQuestionId = data.optString("questionId");
+                            runOnUiThread(() -> {
+                                questionTypeText.setText(data.optString("questionType"));
+                                questionText.setText(data.optString("question_text"));
+                                optionA.setText("A: " + data.optString("option1"));
+                                optionB.setText("B: " + data.optString("option2"));
+                                optionC.setText("C: " + data.optString("option3"));
+                                optionD.setText("D: " + data.optString("option4"));
+                                resultText.setText("");
+                            });
+                            break;
+
+                        case "nextQuestion":
+                            runOnUiThread(() -> resultText.setText("Moving to next question..."));
+                            break;
+
+                        case "sessionEnded":
+                            runOnUiThread(() -> {
+                                questionText.setText("Session ended.");
+                                questionTypeText.setText("");
+                                optionA.setText("A:");
+                                optionB.setText("B:");
+                                optionC.setText("C:");
+                                optionD.setText("D:");
+                                resultText.setText("Quiz session has ended.");
+                            });
+                            break;
+
+                        default:
+                            Log.d("DEBUG", "Unknown WebSocket event: " + event);
+                    }
+                } catch (Exception e) {
+                    runOnUiThread(() -> resultText.setText("Error parsing WebSocket message: " + e.getMessage()));
+                }
+            }
+
+            @Override
+            public void onClosing(WebSocket webSocket, int code, String reason) {
+                webSocket.close(1000, null);
+                Log.d("DEBUG", "WebSocket closing: " + reason);
+            }
+
+            @Override
+            public void onFailure(WebSocket webSocket, Throwable t, Response response) {
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "WebSocket failed: " + t.getMessage(), Toast.LENGTH_SHORT).show());
+                Log.d("DEBUG", "WebSocket failure: " + t.getMessage());
+                // Fallback to polling
+                loadQuestion();
+            }
+        });
     }
 
     private void loadQuestion() {
@@ -74,6 +161,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call call, IOException e) {
                 runOnUiThread(() -> resultText.setText("Error loading question: " + e.getMessage()));
+                // Retry after a delay even on failure
+                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
+                        MainActivity.this::loadQuestion, 3000
+                );
             }
 
             @Override
@@ -109,9 +200,17 @@ public class MainActivity extends AppCompatActivity {
                         optionB.setText("B: " + data.optString("option2"));
                         optionC.setText("C: " + data.optString("option3"));
                         optionD.setText("D: " + data.optString("option4"));
+                        // Continue polling for the next question
+                        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
+                                MainActivity.this::loadQuestion, 3000
+                        );
                     });
                 } catch (Exception e) {
                     runOnUiThread(() -> resultText.setText("Error parsing question: " + e.getMessage()));
+                    // Retry after a delay
+                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(
+                            MainActivity.this::loadQuestion, 3000
+                    );
                 }
             }
         });
@@ -153,5 +252,14 @@ public class MainActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (webSocket != null) {
+            webSocket.close(1000, "Activity destroyed");
+            Log.d("DEBUG", "WebSocket closed on activity destroy");
+        }
     }
 }
