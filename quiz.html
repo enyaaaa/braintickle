@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,7 +18,6 @@
             justify-content: center;
             align-items: center;
         }
-
         .container {
             max-width: 900px;
             margin: 20px;
@@ -27,11 +25,9 @@
             position: relative;
             text-align: center;
         }
-
         .logo {
             max-width: 600px;
         }
-
         .score {
             position: absolute;
             top: 20px;
@@ -39,19 +35,16 @@
             font-size: 18px;
             color: #666;
         }
-
         h1 {
             color: #666;
             font-size: 2.5em;
             margin-bottom: 15px;
         }
-
         h2 {
             color: #666;
             font-size: 1.8em;
             margin-bottom: 15px;
         }
-
         .category-selection {
             background: #fff;
             padding: 20px;
@@ -60,7 +53,6 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
-
         .category-selection button {
             display: block;
             width: 200px;
@@ -75,7 +67,6 @@
             border-radius: 25px;
             transition: background 0.3s ease;
         }
-
         .category-selection button:hover {
             transform: translateY(-2px);
             opacity: 0.9;
@@ -92,7 +83,6 @@
         .category-selection button.geography {
             background: #EED3D9;
         }
-
         .category-selection,
         .session-info,
         .question-display,
@@ -103,7 +93,6 @@
             margin-bottom: 25px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-
         button {
             background: #CCD3CA;
             border: none;
@@ -116,18 +105,15 @@
             margin: 8px;
             transition: background 0.3s ease;
         }
-
         button:hover {
             background: rgb(91, 99, 80);
         }
-
         .timer-container {
             position: relative;
             width: 80px;
             height: 80px;
             margin: 20px auto;
         }
-
         .timer-circle {
             width: 100%;
             height: 100%;
@@ -139,13 +125,11 @@
             background: #fff;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-
         #timer {
             font-size: 24px;
             font-weight: bold;
             color: #333;
         }
-
         .question-card {
             background: #fff;
             padding: 20px;
@@ -153,20 +137,17 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             margin: 20px 0;
         }
-
         .question-text {
             font-size: 24px;
             color: #666;
             margin-bottom: 20px;
         }
-
         .options {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 15px;
             margin-top: 20px;
         }
-
         .options div {
             padding: 15px;
             border-radius: 25px;
@@ -176,28 +157,22 @@
             transition: background 0.3s ease;
             text-align: center;
         }
-
         .options div.disabled {
             pointer-events: none;
             opacity: 0.5;
         }
-
         .option1 {
             background: #B5C0D0;
         }
-
         .option2 {
             background: #CCD3CA;
         }
-
         .option3 {
             background: #F5E8DD;
         }
-
         .option4 {
             background: #EED3D9;
         }
-
         .question-number {
             position: absolute;
             bottom: 20px;
@@ -206,16 +181,13 @@
             font-size: 18px;
             color: #666;
         }
-
         .hidden {
             display: none;
         }
-
         .leaderboard ul {
             list-style: none;
             padding: 0;
         }
-
         .leaderboard li {
             background: #f0f0f0;
             padding: 12px;
@@ -226,14 +198,12 @@
             justify-content: space-between;
             align-items: center;
         }
-
         .leaderboard li.current-player {
             background: #9daf88;
             color: #fff;
         }
     </style>
 </head>
-
 <body>
     <div class="container">
         <img src="logo.png" alt="BrainTickle Logo" class="logo">
@@ -255,6 +225,7 @@
 
         <!-- Question Display -->
         <div id="questionDisplay" class="question-display hidden">
+            <div class="score">Score: <span id="score">0</span></div>
             <h1>Question <span id="questionNumber"></span></h1>
             <div class="timer-container">
                 <div class="timer-circle">
@@ -270,16 +241,15 @@
                     <div id="option4" class="option4" onclick="submitAnswer('D')"></div>
                 </div>
             </div>
-            <button onclick="showLeaderboard()" id="nextButton" class="hidden">Next Question</button>
+            <div class="question-number">Question <span id="questionNumberBottom"></span></div>
+            <button onclick="nextQuestion()" id="nextButton" class="hidden">Next Question</button>
         </div>
 
         <!-- Leaderboard -->
         <div id="leaderboard" class="leaderboard hidden">
-            <h2>Leaderboard</h2>
+            <h2>Final Leaderboard</h2>
             <ul id="leaderboardList"></ul>
-            <button onclick="toggleLeaderboard()" id="hideButton">Hide Leaderboard</button>
-            <button onclick="nextQuestion()" id="continueButton">Continue</button>
-            <button onclick="endSession()" id="endButton" class="hidden">End Session</button>
+            <button onclick="endSession()" id="endButton">End Session</button>
         </div>
     </div>
 
@@ -289,9 +259,6 @@
         let totalQuestions = 5;
         let timerInterval;
         let score = 0;
-        let leaderboardData = [];
-        let pollingInterval;
-        let isLeaderboardVisible = false;
         let hasSubmitted = false;
         const currentPlayer = "Player 1"; // Mock current player
 
@@ -338,6 +305,7 @@
                 const [id, question, option1, option2, option3, option4, answer, remainingTime] = questionData.split('|');
 
                 document.getElementById('questionNumber').textContent = currentQuestion;
+                document.getElementById('questionNumberBottom').textContent = currentQuestion;
                 document.getElementById('questionText').textContent = question;
                 document.getElementById('option1').textContent = `A. ${option1}`;
                 document.getElementById('option2').textContent = `B. ${option2}`;
@@ -364,7 +332,11 @@
                     document.getElementById('timer').textContent = timeLeft;
                     if (timeLeft <= 0) {
                         clearInterval(timerInterval);
-                        document.getElementById('nextButton').classList.remove('hidden');
+                        if (currentQuestion < totalQuestions) {
+                            document.getElementById('nextButton').classList.remove('hidden');
+                        } else {
+                            showLeaderboard();
+                        }
                         // Disable options when time is up
                         for (let option of options) {
                             option.classList.add('disabled');
@@ -405,7 +377,11 @@
                 }
 
                 clearInterval(timerInterval);
-                document.getElementById('nextButton').classList.remove('hidden');
+                if (currentQuestion < totalQuestions) {
+                    document.getElementById('nextButton').classList.remove('hidden');
+                } else {
+                    showLeaderboard();
+                }
             } catch (error) {
                 console.error("Error submitting answer:", error);
                 alert("Failed to submit answer: " + error.message);
@@ -416,26 +392,14 @@
             clearInterval(timerInterval);
             document.getElementById('questionDisplay').classList.add('hidden');
             document.getElementById('leaderboard').classList.remove('hidden');
-            isLeaderboardVisible = true;
 
-            await fetchLeaderboard();
-
-            pollingInterval = setInterval(fetchLeaderboard, 5000);
-
-            if (currentQuestion === totalQuestions) {
-                document.getElementById('continueButton').classList.add('hidden');
-                document.getElementById('endButton').classList.remove('hidden');
-                clearInterval(pollingInterval);
-            }
-        }
-
-        async function fetchLeaderboard() {
             try {
                 const response = await fetch(`http://localhost:9999/braintickle/getLeaderboard?sessionId=${sessionId}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
                 }
                 const leaderboardDataServer = await response.text();
+                let leaderboardData;
                 if (leaderboardDataServer === "No scores yet") {
                     leaderboardData = [];
                 } else {
@@ -472,28 +436,9 @@
             }
         }
 
-        function toggleLeaderboard() {
-            if (isLeaderboardVisible) {
-                document.getElementById('leaderboard').classList.add('hidden');
-                document.getElementById('questionDisplay').classList.remove('hidden');
-                document.getElementById('hideButton').textContent = "Show Leaderboard";
-                isLeaderboardVisible = false;
-                clearInterval(pollingInterval);
-            } else {
-                document.getElementById('questionDisplay').classList.add('hidden');
-                document.getElementById('leaderboard').classList.remove('hidden');
-                document.getElementById('hideButton').textContent = "Hide Leaderboard";
-                isLeaderboardVisible = true;
-                fetchLeaderboard();
-                pollingInterval = setInterval(fetchLeaderboard, 5000);
-            }
-        }
-
         async function nextQuestion() {
             currentQuestion++;
-            clearInterval(pollingInterval);
-            document.getElementById('leaderboard').classList.add('hidden');
-            isLeaderboardVisible = false;
+            document.getElementById('questionDisplay').classList.add('hidden');
             if (currentQuestion <= totalQuestions) {
                 try {
                     const response = await fetch(`http://localhost:9999/braintickle/nextQuestion?sessionId=${sessionId}`);
@@ -509,11 +454,9 @@
         }
 
         function endSession() {
-            clearInterval(pollingInterval);
             alert('Session Ended! Final Leaderboard Displayed.');
             location.reload();
         }
     </script>
 </body>
-
 </html>
