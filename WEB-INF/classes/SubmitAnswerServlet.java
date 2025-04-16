@@ -29,6 +29,7 @@ public class SubmitAnswerServlet extends HttpServlet {
         if (player == null || sessionId == null || questionIdStr == null || playerAnswerStr == null ||
             player.trim().isEmpty() || sessionId.trim().isEmpty() || questionIdStr.trim().isEmpty() || playerAnswerStr.trim().isEmpty()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setContentType("application/json");
             response.getWriter().write("{\"error\":\"Missing required parameters\"}");
             return;
         }
@@ -40,10 +41,12 @@ public class SubmitAnswerServlet extends HttpServlet {
             playerAnswer = mapAnswerToNumber(playerAnswerStr); // Convert A, B, C, D to 1, 2, 3, 4
         } catch (NumberFormatException e) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setContentType("application/json");
             response.getWriter().write("{\"error\":\"Invalid questionId or playerAnswer\"}");
             return;
         } catch (IllegalArgumentException e) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setContentType("application/json");
             response.getWriter().write("{\"error\":\"Invalid questionId or playerAnswer: " + e.getMessage() + "\"}");
             return;
         }
@@ -58,6 +61,7 @@ public class SubmitAnswerServlet extends HttpServlet {
                     ResultSet rs = stmt.executeQuery();
                     if (!rs.next() || rs.getInt("currentQuestionId") != questionId) {
                         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                        response.setContentType("application/json");
                         response.getWriter().write("{\"error\":\"Invalid session or question\"}");
                         return;
                     }
@@ -72,6 +76,7 @@ public class SubmitAnswerServlet extends HttpServlet {
                 ResultSet rs = checkStmt.executeQuery();
                 if (rs.next()) {
                     response.setStatus(HttpServletResponse.SC_CONFLICT); // Or another appropriate status code
+                    response.setContentType("application/json");
                     response.getWriter().write("{\"error\":\"Answer already submitted for this question\"}");
                     return;
                 }
@@ -88,6 +93,7 @@ public class SubmitAnswerServlet extends HttpServlet {
                         correctAnswer = rs.getInt("answer");
                     } else {
                         response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                        response.setContentType("application/json");
                         response.getWriter().write("{\"error\":\"Question not found\"}");
                         return;
                     }
@@ -98,11 +104,12 @@ public class SubmitAnswerServlet extends HttpServlet {
 
                 // Store the answer
                 String insertSql = "INSERT INTO playerAnswers (sessionId, player, questionId, playerAnswer, isCorrect) VALUES (?, ?, ?, ?, ?)";
+                System.out.println("Inserted answer: player=" + player + ", q=" + questionId + ", ans=" + playerAnswerStr + ", correct=" + isCorrect);
                 try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
                     stmt.setString(1, sessionId);
                     stmt.setString(2, player);
                     stmt.setInt(3, questionId);
-                    stmt.setInt(4, playerAnswer);
+                    stmt.setString(4, playerAnswerStr.toUpperCase()); // Store as 'A', 'B', etc
                     stmt.setBoolean(5, isCorrect);
                     stmt.executeUpdate();
                 }
@@ -113,9 +120,11 @@ public class SubmitAnswerServlet extends HttpServlet {
             }
         } catch (ClassNotFoundException e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.setContentType("application/json");
             response.getWriter().write("{\"error\":\"Database driver not found: " + e.getMessage() + "\"}");
         } catch (SQLException e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.setContentType("application/json");
             response.getWriter().write("{\"error\":\"Database error: " + e.getMessage() + "\"}");
         }
     }

@@ -17,7 +17,7 @@ public class DisplayResultsServlet extends HttpServlet {
     private static final String DB_URL = "jdbc:mysql://localhost:3306/braintickle";
     private static final String DB_USER = "root";
     private static final String DB_PASSWORD = "MySecurePassword";
-    private static final int QUESTION_DURATION_SECONDS = 30;
+    private static final int QUESTION_DURATION_SECONDS = 10;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
