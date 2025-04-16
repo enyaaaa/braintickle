@@ -4,6 +4,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -14,8 +15,9 @@ import jakarta.servlet.http.HttpServletResponse;
 @WebServlet("/getQuestion")
 public class GetQuestionServlet extends HttpServlet {
     private static final String DB_URL = "jdbc:mysql://localhost:3306/braintickle";
-    private static final String DB_USER = "root"; // Replace with your MySQL username
-    private static final String DB_PASSWORD = "MySecurePassword"; // Replace with your MySQL password
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "MySecurePassword";
+    private static final int QUESTION_DURATION_SECONDS = 30;
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -29,30 +31,36 @@ public class GetQuestionServlet extends HttpServlet {
         }
 
         try {
-            // Load the MySQL JDBC driver
             Class.forName("com.mysql.cj.jdbc.Driver");
-
-            // Establish database connection
             try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
-                // Get the current question ID from quizSessions
-                String getQuestionIdSql = "SELECT currentQuestionId FROM quizSessions WHERE id = ?";
+                // Get the current question ID and start time from quizSessions
+                String getQuestionIdSql = "SELECT currentQuestionId, questionStartTime FROM quizSessions WHERE id = ?";
                 Integer questionId = null;
+                Timestamp startTime = null;
                 try (PreparedStatement stmt = conn.prepareStatement(getQuestionIdSql)) {
                     stmt.setString(1, sessionId);
                     ResultSet rs = stmt.executeQuery();
                     if (rs.next()) {
                         questionId = rs.getInt("currentQuestionId");
+                        startTime = rs.getTimestamp("questionStartTime");
                         if (rs.wasNull()) {
                             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                             response.getWriter().write("{\"error\":\"No current question set for session\"}");
                             return;
                         }
-                        System.out.println("Fetched currentQuestionId for session " + sessionId + ": " + questionId);
                     } else {
                         response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                         response.getWriter().write("{\"error\":\"Session not found: " + sessionId + "\"}");
                         return;
                     }
+                }
+
+                // Calculate remaining time
+                long remainingTimeSeconds = QUESTION_DURATION_SECONDS;
+                if (startTime != null) {
+                    long elapsedTimeMillis = System.currentTimeMillis() - startTime.getTime();
+                    long elapsedTimeSeconds = elapsedTimeMillis / 1000;
+                    remainingTimeSeconds = Math.max(0, QUESTION_DURATION_SECONDS - elapsedTimeSeconds);
                 }
 
                 // Fetch the question details
@@ -67,7 +75,8 @@ public class GetQuestionServlet extends HttpServlet {
                                              rs.getString("option2") + "|" +
                                              rs.getString("option3") + "|" +
                                              rs.getString("option4") + "|" +
-                                             rs.getInt("answer");
+                                             rs.getInt("answer") + "|" +
+                                             remainingTimeSeconds;
                         response.setContentType("text/plain");
                         response.getWriter().write(questionData);
                     } else {

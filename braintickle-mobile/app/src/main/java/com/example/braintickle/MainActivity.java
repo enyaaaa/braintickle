@@ -23,7 +23,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
-    private TextView sessionInfoText, sessionStatusText, questionTypeText, questionText, resultText;
+    private TextView sessionInfoText, sessionStatusText, questionTypeText, questionText, resultText, timerText;
     private Button optionA, optionB, optionC, optionD, showLeaderboardButton;
     private RecyclerView leaderboardRecyclerView;
     private LeaderboardAdapter leaderboardAdapter;
@@ -32,12 +32,14 @@ public class MainActivity extends AppCompatActivity {
     private String currentQuestionId;
     private boolean isSessionEnded = false;
     private boolean isLeaderboardVisible = false;
+    private boolean hasSubmitted = false;
     private final String SERVER_URL = "http://10.0.2.2:9999/braintickle/submitAnswer";
     private final String DISPLAY_URL = "http://10.0.2.2:9999/braintickle/displayResults?sessionId=";
     private final String LEADERBOARD_URL = "http://10.0.2.2:9999/braintickle/getLeaderboard?sessionId=";
     private OkHttpClient client;
-    private Handler leaderboardHandler;
-    private Runnable leaderboardRunnable;
+    private Handler leaderboardHandler, timerHandler;
+    private Runnable leaderboardRunnable, timerRunnable;
+    private long remainingTimeSeconds;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
         questionTypeText = findViewById(R.id.questionTypeText);
         questionText = findViewById(R.id.questionText);
         resultText = findViewById(R.id.resultText);
+        timerText = findViewById(R.id.timerText);
         optionA = findViewById(R.id.optionA);
         optionB = findViewById(R.id.optionB);
         optionC = findViewById(R.id.optionC);
@@ -69,30 +72,47 @@ public class MainActivity extends AppCompatActivity {
 
         sessionInfoText.setText("Session ID: " + sessionId);
 
-        // Initialize RecyclerView for leaderboard
         leaderboardRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         leaderboardAdapter = new LeaderboardAdapter();
         leaderboardRecyclerView.setAdapter(leaderboardAdapter);
 
-        // Initialize OkHttpClient
         client = new OkHttpClient();
 
-        // Initialize leaderboard polling handler
         leaderboardHandler = new Handler(Looper.getMainLooper());
+        timerHandler = new Handler(Looper.getMainLooper());
+
         leaderboardRunnable = new Runnable() {
             @Override
             public void run() {
                 if (isLeaderboardVisible && !isSessionEnded) {
                     fetchLeaderboard();
-                    leaderboardHandler.postDelayed(this, 5000); // Poll every 5 seconds
+                    leaderboardHandler.postDelayed(this, 5000);
                 }
             }
         };
 
-        // Start polling for questions
+        timerRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (remainingTimeSeconds > 0) {
+                    remainingTimeSeconds--;
+                    timerText.setText(String.valueOf(remainingTimeSeconds));
+                    if (remainingTimeSeconds <= 0) {
+                        optionA.setEnabled(false);
+                        optionB.setEnabled(false);
+                        optionC.setEnabled(false);
+                        optionD.setEnabled(false);
+                    } else {
+                        timerHandler.postDelayed(this, 1000);
+                    }
+                } else {
+                    timerText.setText("0");
+                }
+            }
+        };
+
         loadQuestion();
 
-        // Set up button listeners
         optionA.setOnClickListener(v -> submitAnswer("A"));
         optionB.setOnClickListener(v -> submitAnswer("B"));
         optionC.setOnClickListener(v -> submitAnswer("C"));
@@ -112,7 +132,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call call, IOException e) {
                 runOnUiThread(() -> resultText.setText("Error loading question: " + e.getMessage()));
-                // Retry after a delay even on failure
                 new Handler(Looper.getMainLooper()).postDelayed(MainActivity.this::loadQuestion, 3000);
             }
 
@@ -127,12 +146,17 @@ public class MainActivity extends AppCompatActivity {
                             runOnUiThread(() -> {
                                 questionText.setText("Quiz has not started.");
                                 questionTypeText.setText("");
+                                timerText.setText("");
                                 optionA.setText("1");
                                 optionB.setText("2");
                                 optionC.setText("3");
                                 optionD.setText("4");
+                                optionA.setEnabled(true);
+                                optionB.setEnabled(true);
+                                optionC.setEnabled(true);
+                                optionD.setEnabled(true);
+                                hasSubmitted = false;
                             });
-                            // Retry after 3 seconds
                             new Handler(Looper.getMainLooper()).postDelayed(MainActivity.this::loadQuestion, 3000);
                             return;
                         } else if (message.equals("Session ended.")) {
@@ -141,33 +165,51 @@ public class MainActivity extends AppCompatActivity {
                                 sessionStatusText.setText("Session Ended");
                                 questionText.setText("Session ended.");
                                 questionTypeText.setText("");
+                                timerText.setText("");
                                 optionA.setText("1");
                                 optionB.setText("2");
                                 optionC.setText("3");
                                 optionD.setText("4");
                                 resultText.setText("Quiz session has ended.");
                                 showLeaderboardButton.setVisibility(View.VISIBLE);
-                                fetchLeaderboard(); // Fetch final leaderboard
+                                fetchLeaderboard();
                             });
                             return;
                         }
                     }
 
                     currentQuestionId = data.optString("questionId");
+                    remainingTimeSeconds = data.optLong("remainingTime", 30);
+                    if (remainingTimeSeconds < 0) {
+                        remainingTimeSeconds = 0;
+                    }
                     runOnUiThread(() -> {
                         questionTypeText.setText(data.optString("questionType"));
                         questionText.setText(data.optString("question_text"));
+                        timerText.setText(String.valueOf(remainingTimeSeconds));
                         optionA.setText("A: " + data.optString("option1"));
                         optionB.setText("B: " + data.optString("option2"));
                         optionC.setText("C: " + data.optString("option3"));
                         optionD.setText("D: " + data.optString("option4"));
                         showLeaderboardButton.setVisibility(View.VISIBLE);
-                        // Continue polling for the next question
+                        hasSubmitted = false;
+                        optionA.setEnabled(true);
+                        optionB.setEnabled(true);
+                        optionC.setEnabled(true);
+                        optionD.setEnabled(true);
+                        timerHandler.removeCallbacks(timerRunnable);
+                        if (remainingTimeSeconds > 0) {
+                            timerHandler.post(timerRunnable);
+                        } else {
+                            optionA.setEnabled(false);
+                            optionB.setEnabled(false);
+                            optionC.setEnabled(false);
+                            optionD.setEnabled(false);
+                        }
                         new Handler(Looper.getMainLooper()).postDelayed(MainActivity.this::loadQuestion, 3000);
                     });
                 } catch (Exception e) {
                     runOnUiThread(() -> resultText.setText("Error parsing question: " + e.getMessage()));
-                    // Retry after a delay
                     new Handler(Looper.getMainLooper()).postDelayed(MainActivity.this::loadQuestion, 3000);
                 }
             }
@@ -175,10 +217,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void submitAnswer(String playerAnswer) {
-        if (currentQuestionId == null || currentQuestionId.isEmpty()) {
-            Toast.makeText(this, "No question loaded", Toast.LENGTH_SHORT).show();
+        if (hasSubmitted || remainingTimeSeconds <= 0 || currentQuestionId == null || currentQuestionId.isEmpty()) {
+            Toast.makeText(this, "Cannot submit answer at this time", Toast.LENGTH_SHORT).show();
             return;
         }
+
         FormBody formBody = new FormBody.Builder()
                 .add("player", playerName)
                 .add("questionId", currentQuestionId)
@@ -206,7 +249,13 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     resultText.setText(responseBody);
                     Toast.makeText(MainActivity.this, "Answer submitted", Toast.LENGTH_SHORT).show();
-                    fetchLeaderboard(); // Fetch leaderboard after submission
+                    hasSubmitted = true;
+                    optionA.setEnabled(false);
+                    optionB.setEnabled(false);
+                    optionC.setEnabled(false);
+                    optionD.setEnabled(false);
+                    timerHandler.removeCallbacks(timerRunnable);
+                    fetchLeaderboard();
                 });
             }
         });
@@ -281,5 +330,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         leaderboardHandler.removeCallbacks(leaderboardRunnable);
+        timerHandler.removeCallbacks(timerRunnable);
     }
 }

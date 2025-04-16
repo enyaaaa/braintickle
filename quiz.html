@@ -59,16 +59,12 @@
             margin-bottom: 25px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             text-align: center;
-            /* Center the buttons horizontally */
         }
 
         .category-selection button {
             display: block;
-            /* Make buttons block-level to stack vertically */
             width: 200px;
-            /* Fixed width for consistency */
             margin: 10px auto;
-            /* Center buttons with auto horizontal margins */
             background: #CCD3CA;
             border: none;
             padding: 12px 25px;
@@ -181,6 +177,11 @@
             text-align: center;
         }
 
+        .options div.disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
         .option1 {
             background: #B5C0D0;
         }
@@ -262,11 +263,11 @@
             </div>
             <div class="question-card">
                 <div class="question-text" id="questionText"></div>
-                <div class="options">
-                    <div id="option1" class="option1"></div>
-                    <div id="option2" class="option2"></div>
-                    <div id="option3" class="option3"></div>
-                    <div id="option4" class="option4"></div>
+                <div class="options" id="options">
+                    <div id="option1" class="option1" onclick="submitAnswer('A')"></div>
+                    <div id="option2" class="option2" onclick="submitAnswer('B')"></div>
+                    <div id="option3" class="option3" onclick="submitAnswer('C')"></div>
+                    <div id="option4" class="option4" onclick="submitAnswer('D')"></div>
                 </div>
             </div>
             <button onclick="showLeaderboard()" id="nextButton" class="hidden">Next Question</button>
@@ -291,6 +292,7 @@
         let leaderboardData = [];
         let pollingInterval;
         let isLeaderboardVisible = false;
+        let hasSubmitted = false;
         const currentPlayer = "Player 1"; // Mock current player
 
         async function startSession(category) {
@@ -333,7 +335,7 @@
                     throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
                 }
                 const questionData = await response.text();
-                const [id, question, option1, option2, option3, option4, answer] = questionData.split('|');
+                const [id, question, option1, option2, option3, option4, answer, remainingTime] = questionData.split('|');
 
                 document.getElementById('questionNumber').textContent = currentQuestion;
                 document.getElementById('questionText').textContent = question;
@@ -343,15 +345,30 @@
                 document.getElementById('option4').textContent = `D. ${option4}`;
                 document.getElementById('questionDisplay').classList.remove('hidden');
 
-                // Start timer
-                let timeLeft = 30;
+                // Reset submission state
+                hasSubmitted = false;
+                const options = document.getElementById('options').children;
+                for (let option of options) {
+                    option.classList.remove('disabled');
+                }
+
+                // Start timer based on server-provided remaining time
+                let timeLeft = parseInt(remainingTime);
+                if (isNaN(timeLeft) || timeLeft < 0) {
+                    timeLeft = 30; // Fallback to 30 seconds if invalid
+                }
                 document.getElementById('timer').textContent = timeLeft;
-                timerInterval = setInterval(async () => {
+                clearInterval(timerInterval); // Clear any existing interval
+                timerInterval = setInterval(() => {
                     timeLeft--;
                     document.getElementById('timer').textContent = timeLeft;
                     if (timeLeft <= 0) {
                         clearInterval(timerInterval);
                         document.getElementById('nextButton').classList.remove('hidden');
+                        // Disable options when time is up
+                        for (let option of options) {
+                            option.classList.add('disabled');
+                        }
                     }
                 }, 1000);
             } catch (error) {
@@ -361,6 +378,10 @@
         }
 
         async function submitAnswer(answer) {
+            if (hasSubmitted || document.getElementById('timer').textContent === "0") {
+                return; // Prevent submission if already submitted or time is up
+            }
+
             try {
                 const response = await fetch(`http://localhost:9999/braintickle/submitAnswer`, {
                     method: 'POST',
@@ -376,6 +397,12 @@
                 // Update score (mock scoring: +100 for each answer)
                 score += 100;
                 document.getElementById('score').textContent = score;
+
+                hasSubmitted = true;
+                const options = document.getElementById('options').children;
+                for (let option of options) {
+                    option.classList.add('disabled');
+                }
 
                 clearInterval(timerInterval);
                 document.getElementById('nextButton').classList.remove('hidden');
@@ -393,19 +420,18 @@
 
             await fetchLeaderboard();
 
-            // Start polling for leaderboard updates
-            pollingInterval = setInterval(fetchLeaderboard, 5000); // Poll every 5 seconds
+            pollingInterval = setInterval(fetchLeaderboard, 5000);
 
             if (currentQuestion === totalQuestions) {
                 document.getElementById('continueButton').classList.add('hidden');
                 document.getElementById('endButton').classList.remove('hidden');
-                clearInterval(pollingInterval); // Stop polling at session end
+                clearInterval(pollingInterval);
             }
         }
 
         async function fetchLeaderboard() {
             try {
-                const response = await fetch(`http://localhost:9999/getLeaderboard?sessionId=${sessionId}`);
+                const response = await fetch(`http://localhost:9999/braintickle/getLeaderboard?sessionId=${sessionId}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
                 }

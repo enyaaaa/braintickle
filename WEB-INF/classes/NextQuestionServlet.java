@@ -4,6 +4,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -14,8 +15,8 @@ import jakarta.servlet.http.HttpServletResponse;
 @WebServlet("/nextQuestion")
 public class NextQuestionServlet extends HttpServlet {
     private static final String DB_URL = "jdbc:mysql://localhost:3306/braintickle";
-    private static final String DB_USER = "root"; // Replace with your MySQL username
-    private static final String DB_PASSWORD = "MySecurePassword"; // Replace with your MySQL password
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "MySecurePassword";
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -29,22 +30,19 @@ public class NextQuestionServlet extends HttpServlet {
         }
 
         try {
-            // Load the MySQL JDBC driver
             Class.forName("com.mysql.cj.jdbc.Driver");
-
-            // Establish database connection
             try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
-                Integer currentQuestionId = null;
-
-                String getSessionSql = "SELECT currentQuestionId FROM quizSessions WHERE id = ?";
-                try (PreparedStatement stmt = conn.prepareStatement(getSessionSql)) {
+                // Get the current question's category
+                String getCurrentQuestionSql = "SELECT q.questionType " +
+                                              "FROM quizSessions qs " +
+                                              "JOIN questions q ON qs.currentQuestionId = q.id " +
+                                              "WHERE qs.id = ?";
+                String category;
+                try (PreparedStatement stmt = conn.prepareStatement(getCurrentQuestionSql)) {
                     stmt.setString(1, sessionId);
                     ResultSet rs = stmt.executeQuery();
                     if (rs.next()) {
-                        currentQuestionId = rs.getInt("currentQuestionId");
-                        if (rs.wasNull()) {
-                            currentQuestionId = null;
-                        }
+                        category = rs.getString("questionType");
                     } else {
                         response.setStatus(HttpServletResponse.SC_NOT_FOUND);
                         response.getWriter().write("Session not found: " + sessionId);
@@ -52,115 +50,37 @@ public class NextQuestionServlet extends HttpServlet {
                     }
                 }
 
-                // If currentQuestionId is null, get first question in category
-                if (currentQuestionId == null) {
-                    // Step 2: Find the category (we assume first question for the session is from a known category)
-                    String getCategorySql = "SELECT questionType FROM questions LIMIT 1"; // fallback
-                    String category = null;
-
-                    try (PreparedStatement stmt = conn.prepareStatement(getCategorySql)) {
-                        ResultSet rs = stmt.executeQuery();
-                        if (rs.next()) {
-                            category = rs.getString("questionType");
-                        } else {
-                            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                            response.getWriter().write("No categories found in questions table");
-                            return;
-                        }
-                    }
-
-                    // Step 3: Get first question for that category
-                    String firstQuestionSql = "SELECT id FROM questions WHERE questionType = ? ORDER BY id ASC LIMIT 1";
-                    int firstQuestionId;
-                    try (PreparedStatement stmt = conn.prepareStatement(firstQuestionSql)) {
-                        stmt.setString(1, category);
-                        ResultSet rs = stmt.executeQuery();
-                        if (rs.next()) {
-                            firstQuestionId = rs.getInt("id");
-                        } else {
-                            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                            response.getWriter().write("No questions found in category: " + category);
-                            return;
-                        }
-                    }
-
-                    // Step 4: Update session
-                    String updateSql = "UPDATE quizSessions SET currentQuestionId = ? WHERE id = ?";
-                    try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {
-                        stmt.setInt(1, firstQuestionId);
-                        stmt.setString(2, sessionId);
-                        stmt.executeUpdate();
-                    }
-
-                    response.setContentType("text/plain");
-                    response.getWriter().write("Started quiz with first question: " + firstQuestionId);
-                    return;
-                }
-            
-
-                // Get the current question ID and category from quizSessions
-//                 String getSessionSql = "SELECT currentQuestionId FROM quizSessions WHERE id = ?";
-//                 // int currentQuestionId;
-//                 try (PreparedStatement stmt = conn.prepareStatement(getSessionSql)) {
-//                     stmt.setString(1, sessionId);
-//                     ResultSet rs = stmt.executeQuery();
-//                     if (!rs.next()) {
-//                         response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-//                         response.getWriter().write("Session not found: " + sessionId);
-//                         return;
-//                     }
-//                     currentQuestionId = rs.getInt("currentQuestionId");
-// if (rs.wasNull()) {
-//     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-//     response.getWriter().write("Quiz has not started yet (questionId is null)");
-//     return;
-// }
-
-    
-
-                // Get the category of the current question
-                String getCategorySql = "SELECT questionType FROM questions WHERE id = ?";
-                String category;
-                try (PreparedStatement stmt = conn.prepareStatement(getCategorySql)) {
-                    stmt.setInt(1, currentQuestionId);
-                    ResultSet rs = stmt.executeQuery();
-                    if (!rs.next()) {
-                        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                        response.getWriter().write("Question not found: " + currentQuestionId);
-                        return;
-                    }
-                    category = rs.getString("questionType");
-                }
-
-                // Fetch the next question ID in the same category
-                String getNextQuestionSql = "SELECT id FROM questions WHERE questionType = ? AND id > ? LIMIT 1";
-                int nextQuestionId = -1;
-                try (PreparedStatement stmt = conn.prepareStatement(getNextQuestionSql)) {
+                // Fetch a new random question from the same category
+                String selectRandomQuestionSql = "SELECT id FROM questions WHERE questionType = ? ORDER BY RAND() LIMIT 1";
+                int newQuestionId;
+                try (PreparedStatement stmt = conn.prepareStatement(selectRandomQuestionSql)) {
                     stmt.setString(1, category);
-                    stmt.setInt(2, currentQuestionId);
                     ResultSet rs = stmt.executeQuery();
                     if (rs.next()) {
-                        nextQuestionId = rs.getInt("id");
+                        newQuestionId = rs.getInt("id");
+                    } else {
+                        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                        response.getWriter().write("No more questions found for category: " + category);
+                        return;
                     }
                 }
 
-                if (nextQuestionId == -1) {
-                    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                    response.getWriter().write("No more questions in category: " + category);
-                    return;
-                }
-
-                // Update the currentQuestionId in quizSessions
-                String updateSessionSql = "UPDATE quizSessions SET currentQuestionId = ? WHERE id = ?";
+                // Update the currentQuestionId and set questionStartTime
+                String updateSessionSql = "UPDATE quizSessions SET currentQuestionId = ?, questionStartTime = ? WHERE id = ?";
                 try (PreparedStatement stmt = conn.prepareStatement(updateSessionSql)) {
-                    stmt.setInt(1, nextQuestionId);
-                    stmt.setString(2, sessionId);
-                    stmt.executeUpdate();
+                    stmt.setInt(1, newQuestionId);
+                    stmt.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
+                    stmt.setString(3, sessionId);
+                    int rowsUpdated = stmt.executeUpdate();
+                    if (rowsUpdated == 0) {
+                        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                        response.getWriter().write("Session not found: " + sessionId);
+                        return;
+                    }
                 }
 
-                // Respond with success message
                 response.setContentType("text/plain");
-                response.getWriter().write("Moved to next question successfully");
+                response.getWriter().write("Next question set successfully: " + newQuestionId);
             }
         } catch (ClassNotFoundException e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

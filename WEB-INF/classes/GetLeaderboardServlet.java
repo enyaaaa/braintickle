@@ -11,7 +11,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@WebServlet("/getLeaderboard")
+@WebServlet("/braintickle/getLeaderboard")
 public class GetLeaderboardServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
@@ -22,7 +22,7 @@ public class GetLeaderboardServlet extends HttpServlet {
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        System.out.println("Received request for /getLeaderboard");
+        System.out.println("Received request for /braintickle/getLeaderboard");
         String sessionId = request.getParameter("sessionId");
         response.setContentType("text/plain");
         response.setHeader("Access-Control-Allow-Origin", "*");
@@ -36,7 +36,6 @@ public class GetLeaderboardServlet extends HttpServlet {
             Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/braintickle", "root", "MySecurePassword");
             System.out.println("Database connection established");
 
-            // Count correct answers (isCorrect = 1) per player for the session
             PreparedStatement stmt = conn.prepareStatement(
                 "SELECT player, COUNT(*) as score " +
                 "FROM playerAnswers " +
@@ -50,7 +49,7 @@ public class GetLeaderboardServlet extends HttpServlet {
             StringBuilder leaderboard = new StringBuilder();
             while (rs.next()) {
                 String player = rs.getString("player");
-                int score = rs.getInt("score") * 100; // 100 points per correct answer
+                int score = rs.getInt("score") * 100;
                 if (leaderboard.length() > 0) {
                     leaderboard.append("|");
                 }

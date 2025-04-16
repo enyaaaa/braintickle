@@ -15,8 +15,8 @@ import jakarta.servlet.http.HttpServletResponse;
 @WebServlet("/getQuestionByCategory")
 public class GetQuestionByCategoryServlet extends HttpServlet {
     private static final String DB_URL = "jdbc:mysql://localhost:3306/braintickle";
-    private static final String DB_USER = "root"; // Replace with your MySQL username
-    private static final String DB_PASSWORD = "MySecurePassword"; // Replace with your MySQL password
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "MySecurePassword";
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -31,10 +31,7 @@ public class GetQuestionByCategoryServlet extends HttpServlet {
         }
 
         try {
-            // Load the MySQL JDBC driver
             Class.forName("com.mysql.cj.jdbc.Driver");
-
-            // Establish database connection
             try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
                 // Fetch a random question ID for the category
                 String selectRandomQuestionSql = "SELECT id FROM questions WHERE questionType = ? ORDER BY RAND() LIMIT 1";
@@ -51,16 +48,17 @@ public class GetQuestionByCategoryServlet extends HttpServlet {
                     }
                 }
 
-                // Insert new session into quizSessions table with the question ID
-                String insertSessionSql = "INSERT INTO quizSessions (id, currentQuestionId, status, created_at) VALUES (?, ?, 'active', ?)";
+                // Insert new session into quizSessions table with the question ID and start time
+                String insertSessionSql = "INSERT INTO quizSessions (id, currentQuestionId, status, created_at, questionStartTime) VALUES (?, ?, 'active', ?, ?)";
                 try (PreparedStatement stmt = conn.prepareStatement(insertSessionSql)) {
+                    Timestamp currentTime = new Timestamp(System.currentTimeMillis());
                     stmt.setString(1, sessionId);
                     stmt.setInt(2, questionId);
-                    stmt.setTimestamp(3, new Timestamp(System.currentTimeMillis()));
+                    stmt.setTimestamp(3, currentTime);
+                    stmt.setTimestamp(4, currentTime);
                     stmt.executeUpdate();
                 }
 
-                // Respond with success message
                 response.setContentType("text/plain");
                 response.getWriter().write("Session created successfully with question ID: " + questionId);
             }
