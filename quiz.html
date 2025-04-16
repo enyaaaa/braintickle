@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,6 +19,7 @@
             justify-content: center;
             align-items: center;
         }
+
         .container {
             max-width: 900px;
             margin: 20px;
@@ -25,9 +27,11 @@
             position: relative;
             text-align: center;
         }
+
         .logo {
             max-width: 600px;
         }
+
         .score {
             position: absolute;
             top: 20px;
@@ -35,16 +39,19 @@
             font-size: 18px;
             color: #666;
         }
+
         h1 {
             color: #666;
             font-size: 2.5em;
             margin-bottom: 15px;
         }
+
         h2 {
             color: #666;
             font-size: 1.8em;
             margin-bottom: 15px;
         }
+
         .category-selection {
             background: #fff;
             padding: 20px;
@@ -53,6 +60,7 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
+
         .category-selection button {
             display: block;
             width: 200px;
@@ -67,22 +75,28 @@
             border-radius: 25px;
             transition: background 0.3s ease;
         }
+
         .category-selection button:hover {
             transform: translateY(-2px);
             opacity: 0.9;
         }
+
         .category-selection button.math {
             background: #B5C0D0;
         }
+
         .category-selection button.science {
             background: #CCD3CA;
         }
+
         .category-selection button.general {
             background: #F5E8DD;
         }
+
         .category-selection button.geography {
             background: #EED3D9;
         }
+
         .category-selection,
         .session-info,
         .question-display,
@@ -93,6 +107,7 @@
             margin-bottom: 25px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         button {
             background: #CCD3CA;
             border: none;
@@ -105,15 +120,19 @@
             margin: 8px;
             transition: background 0.3s ease;
         }
+
         button:hover {
-            background: rgb(91, 99, 80);
+            transform: translateY(-2px);
+            opacity: 0.9;
         }
+
         .timer-container {
             position: relative;
             width: 80px;
             height: 80px;
             margin: 20px auto;
         }
+
         .timer-circle {
             width: 100%;
             height: 100%;
@@ -125,11 +144,13 @@
             background: #fff;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
+
         #timer {
             font-size: 24px;
             font-weight: bold;
             color: #333;
         }
+
         .question-card {
             background: #fff;
             padding: 20px;
@@ -137,57 +158,53 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             margin: 20px 0;
         }
+
         .question-text {
             font-size: 24px;
             color: #666;
             margin-bottom: 20px;
         }
+
         .options {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 15px;
             margin-top: 20px;
         }
+
         .options div {
             padding: 15px;
             border-radius: 25px;
             font-size: 18px;
             color: #333;
-            cursor: pointer;
-            transition: background 0.3s ease;
             text-align: center;
         }
-        .options div.disabled {
-            pointer-events: none;
-            opacity: 0.5;
-        }
+
         .option1 {
             background: #B5C0D0;
         }
+
         .option2 {
             background: #CCD3CA;
         }
+
         .option3 {
             background: #F5E8DD;
         }
+
         .option4 {
             background: #EED3D9;
         }
-        .question-number {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 18px;
-            color: #666;
-        }
+
         .hidden {
             display: none;
         }
+
         .leaderboard ul {
             list-style: none;
             padding: 0;
         }
+
         .leaderboard li {
             background: #f0f0f0;
             padding: 12px;
@@ -198,12 +215,14 @@
             justify-content: space-between;
             align-items: center;
         }
+
         .leaderboard li.current-player {
             background: #9daf88;
             color: #fff;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <img src="logo.png" alt="BrainTickle Logo" class="logo">
@@ -219,13 +238,13 @@
         <!-- Session Info -->
         <div id="sessionInfo" class="session-info hidden">
             <h2>Session Started</h2>
-            <p>Session Code: <span id="sessionCode"></span></p>
+            <p>Session Code: <span id="sessionCodeDisplay"></span></p>
             <button onclick="startGame()">Start Game</button>
         </div>
 
         <!-- Question Display -->
         <div id="questionDisplay" class="question-display hidden">
-            <div class="score">Score: <span id="score">0</span></div>
+            <div class="score">Session ID: <span id="sessionCode"></span></div>
             <h1>Question <span id="questionNumber"></span></h1>
             <div class="timer-container">
                 <div class="timer-circle">
@@ -235,13 +254,12 @@
             <div class="question-card">
                 <div class="question-text" id="questionText"></div>
                 <div class="options" id="options">
-                    <div id="option1" class="option1" onclick="submitAnswer('A')"></div>
-                    <div id="option2" class="option2" onclick="submitAnswer('B')"></div>
-                    <div id="option3" class="option3" onclick="submitAnswer('C')"></div>
-                    <div id="option4" class="option4" onclick="submitAnswer('D')"></div>
+                    <div id="option1" class="option1">A. </div>
+                    <div id="option2" class="option2">B. </div>
+                    <div id="option3" class="option3">C. </div>
+                    <div id="option4" class="option4">D. </div>
                 </div>
             </div>
-            <div class="question-number">Question <span id="questionNumberBottom"></span></div>
             <button onclick="nextQuestion()" id="nextButton" class="hidden">Next Question</button>
         </div>
 
@@ -259,12 +277,12 @@
         let totalQuestions = 5;
         let timerInterval;
         let score = 0;
-        let hasSubmitted = false;
         const currentPlayer = "Player 1"; // Mock current player
 
         async function startSession(category) {
             sessionId = Math.random().toString(36).substring(2, 8).toUpperCase();
             document.getElementById('sessionCode').textContent = sessionId;
+            document.getElementById('sessionCodeDisplay').textContent = sessionId; // Update new session ID display
 
             try {
                 const response = await fetch(`http://localhost:9999/braintickle/getQuestionByCategory?category=${category}&sessionId=${sessionId}`);
@@ -297,15 +315,17 @@
 
         async function fetchQuestion() {
             try {
+                document.getElementById('nextButton').classList.add('hidden'); // Hide button at start of each question
                 const response = await fetch(`http://localhost:9999/braintickle/getQuestion?sessionId=${sessionId}`);
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
                 }
                 const questionData = await response.text();
+                console.log("Fetched question data:", questionData); // Debug log
                 const [id, question, option1, option2, option3, option4, answer, remainingTime] = questionData.split('|');
+                console.log("Parsed remainingTime:", remainingTime); // Debug log
 
                 document.getElementById('questionNumber').textContent = currentQuestion;
-                document.getElementById('questionNumberBottom').textContent = currentQuestion;
                 document.getElementById('questionText').textContent = question;
                 document.getElementById('option1').textContent = `A. ${option1}`;
                 document.getElementById('option2').textContent = `B. ${option2}`;
@@ -313,33 +333,20 @@
                 document.getElementById('option4').textContent = `D. ${option4}`;
                 document.getElementById('questionDisplay').classList.remove('hidden');
 
-                // Reset submission state
-                hasSubmitted = false;
-                const options = document.getElementById('options').children;
-                for (let option of options) {
-                    option.classList.remove('disabled');
-                }
-
                 // Start timer based on server-provided remaining time
-                let timeLeft = parseInt(remainingTime);
-                if (isNaN(timeLeft) || timeLeft < 0) {
-                    timeLeft = 30; // Fallback to 30 seconds if invalid
-                }
+                let timeLeft = parseInt(remainingTime) || 30; // Fallback to 30 if invalid
                 document.getElementById('timer').textContent = timeLeft;
-                clearInterval(timerInterval); // Clear any existing interval
+                if (timerInterval) clearInterval(timerInterval); // Clear existing interval if it exists
                 timerInterval = setInterval(() => {
                     timeLeft--;
                     document.getElementById('timer').textContent = timeLeft;
+                    console.log("Timer tick, timeLeft:", timeLeft); // Debug log
                     if (timeLeft <= 0) {
                         clearInterval(timerInterval);
                         if (currentQuestion < totalQuestions) {
                             document.getElementById('nextButton').classList.remove('hidden');
                         } else {
                             showLeaderboard();
-                        }
-                        // Disable options when time is up
-                        for (let option of options) {
-                            option.classList.add('disabled');
                         }
                     }
                 }, 1000);
@@ -350,10 +357,6 @@
         }
 
         async function submitAnswer(answer) {
-            if (hasSubmitted || document.getElementById('timer').textContent === "0") {
-                return; // Prevent submission if already submitted or time is up
-            }
-
             try {
                 const response = await fetch(`http://localhost:9999/braintickle/submitAnswer`, {
                     method: 'POST',
@@ -368,20 +371,7 @@
 
                 // Update score (mock scoring: +100 for each answer)
                 score += 100;
-                document.getElementById('score').textContent = score;
-
-                hasSubmitted = true;
-                const options = document.getElementById('options').children;
-                for (let option of options) {
-                    option.classList.add('disabled');
-                }
-
-                clearInterval(timerInterval);
-                if (currentQuestion < totalQuestions) {
-                    document.getElementById('nextButton').classList.remove('hidden');
-                } else {
-                    showLeaderboard();
-                }
+                document.getElementById('sessionCode').textContent = sessionId; // Keep session ID updated
             } catch (error) {
                 console.error("Error submitting answer:", error);
                 alert("Failed to submit answer: " + error.message);
@@ -454,9 +444,16 @@
         }
 
         function endSession() {
-            alert('Session Ended! Final Leaderboard Displayed.');
-            location.reload();
+            // Trigger a custom event to notify the Android app to redirect
+            if (window.Android && window.Android.onSessionEnd) {
+                window.Android.onSessionEnd();
+            } else {
+                alert('Session Ended! Final Leaderboard Displayed.');
+                location.reload(); // Fallback for non-WebView contexts
+            }
         }
     </script>
+    <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'9315eefd4fb344cf',t:'MTc0NDgzMDExMC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
 </body>
+
 </html>
