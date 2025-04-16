@@ -33,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean isSessionEnded = false;
     private boolean isLeaderboardVisible = false;
     private boolean hasSubmitted = false;
+    private boolean quizStarted = false;
     private final String SERVER_URL = "http://10.0.2.2:9999/braintickle/submitAnswer";
     private final String DISPLAY_URL = "http://10.0.2.2:9999/braintickle/displayResults?sessionId=";
     private final String LEADERBOARD_URL = "http://10.0.2.2:9999/braintickle/getLeaderboard?sessionId=";
@@ -45,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        TextView scoreText = findViewById(R.id.scoreText);
 
         sessionId = getIntent().getStringExtra("sessionId");
         playerName = getIntent().getStringExtra("playerName");
@@ -71,6 +73,8 @@ public class MainActivity extends AppCompatActivity {
         leaderboardRecyclerView = findViewById(R.id.leaderboardRecyclerView);
 
         sessionInfoText.setText("Session ID: " + sessionId);
+        questionText.setText("Waiting for quiz to start..."); // Initial waiting message
+        disableOptions();
 
         leaderboardRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         leaderboardAdapter = new LeaderboardAdapter();
@@ -94,14 +98,15 @@ public class MainActivity extends AppCompatActivity {
         timerRunnable = new Runnable() {
             @Override
             public void run() {
-                if (remainingTimeSeconds > 0) {
+                if (remainingTimeSeconds > 0 && quizStarted && !hasSubmitted){
                     remainingTimeSeconds--;
                     timerText.setText(String.valueOf(remainingTimeSeconds));
                     if (remainingTimeSeconds <= 0) {
-                        optionA.setEnabled(false);
-                        optionB.setEnabled(false);
-                        optionC.setEnabled(false);
-                        optionD.setEnabled(false);
+                        disableOptions();
+//                        optionA.setEnabled(false);
+//                        optionB.setEnabled(false);
+//                        optionC.setEnabled(false);
+//                        optionD.setEnabled(false);
                     } else {
                         timerHandler.postDelayed(this, 1000);
                     }
@@ -120,7 +125,31 @@ public class MainActivity extends AppCompatActivity {
         showLeaderboardButton.setOnClickListener(v -> toggleLeaderboard());
     }
 
+    private void disableOptions() {
+        optionA.setEnabled(false);
+        optionB.setEnabled(false);
+        optionC.setEnabled(false);
+        optionD.setEnabled(false);
+
+        optionA.setAlpha(0.5f);  // Dim the options to indicate they are disabled
+        optionB.setAlpha(0.5f);
+        optionC.setAlpha(0.5f);
+        optionD.setAlpha(0.5f);
+    }
+
+    private void enableOptions() {
+        optionA.setEnabled(true);
+        optionB.setEnabled(true);
+        optionC.setEnabled(true);
+        optionD.setEnabled(true);
+        optionA.setAlpha(1.0f);
+        optionB.setAlpha(1.0f);
+        optionC.setAlpha(1.0f);
+        optionD.setAlpha(1.0f);
+    }
+
     private void loadQuestion() {
+        hasSubmitted = false;
         String url = DISPLAY_URL + sessionId;
         Log.d("DEBUG", "Loading question from: " + url);
 
@@ -140,44 +169,36 @@ public class MainActivity extends AppCompatActivity {
                 String responseBody = response.body().string();
                 try {
                     JSONObject data = new JSONObject(responseBody);
-                    if (data.has("message")) {
-                        String message = data.getString("message");
-                        if (message.equals("Waiting for teacher to start quiz.")) {
-                            runOnUiThread(() -> {
-                                questionText.setText("Quiz has not started.");
-                                questionTypeText.setText("");
-                                timerText.setText("");
-                                optionA.setText("1");
-                                optionB.setText("2");
-                                optionC.setText("3");
-                                optionD.setText("4");
-                                optionA.setEnabled(true);
-                                optionB.setEnabled(true);
-                                optionC.setEnabled(true);
-                                optionD.setEnabled(true);
-                                hasSubmitted = false;
-                            });
+                    if (data.has("status") && data.getString("status").equals("waiting")) {
+                        quizStarted = false;
+                        runOnUiThread(() -> {
+                            questionText.setText("Waiting for quiz to start...");
+                            questionTypeText.setText("");
+                            timerText.setText("");
+                            disableOptions();
+                        });
                             new Handler(Looper.getMainLooper()).postDelayed(MainActivity.this::loadQuestion, 3000);
                             return;
-                        } else if (message.equals("Session ended.")) {
+                        } else if (data.has("status") && data.getString("status").equals("ended")) {
+                        isSessionEnded = true;
                             runOnUiThread(() -> {
-                                isSessionEnded = true;
                                 sessionStatusText.setText("Session Ended");
                                 questionText.setText("Session ended.");
                                 questionTypeText.setText("");
                                 timerText.setText("");
-                                optionA.setText("1");
-                                optionB.setText("2");
-                                optionC.setText("3");
-                                optionD.setText("4");
+                                disableOptions();
+//                                optionA.setText("1");
+//                                optionB.setText("2");
+//                                optionC.setText("3");
+//                                optionD.setText("4");
                                 resultText.setText("Quiz session has ended.");
                                 showLeaderboardButton.setVisibility(View.VISIBLE);
                                 fetchLeaderboard();
                             });
                             return;
                         }
-                    }
 
+                    quizStarted = true;
                     currentQuestionId = data.optString("questionId");
                     remainingTimeSeconds = data.optLong("remainingTime", 30);
                     if (remainingTimeSeconds < 0) {
@@ -192,19 +213,25 @@ public class MainActivity extends AppCompatActivity {
                         optionC.setText("C: " + data.optString("option3"));
                         optionD.setText("D: " + data.optString("option4"));
                         showLeaderboardButton.setVisibility(View.VISIBLE);
-                        hasSubmitted = false;
-                        optionA.setEnabled(true);
-                        optionB.setEnabled(true);
-                        optionC.setEnabled(true);
-                        optionD.setEnabled(true);
+
+                        if (!hasSubmitted) {
+                            enableOptions();
+                        }
+
+//                        optionA.setEnabled(true);
+//                        optionB.setEnabled(true);
+//                        optionC.setEnabled(true);
+//                        optionD.setEnabled(true);
+
                         timerHandler.removeCallbacks(timerRunnable);
                         if (remainingTimeSeconds > 0) {
                             timerHandler.post(timerRunnable);
                         } else {
-                            optionA.setEnabled(false);
-                            optionB.setEnabled(false);
-                            optionC.setEnabled(false);
-                            optionD.setEnabled(false);
+//                            optionA.setEnabled(false);
+//                            optionB.setEnabled(false);
+//                            optionC.setEnabled(false);
+//                            optionD.setEnabled(false);
+                            disableOptions();
                         }
                         new Handler(Looper.getMainLooper()).postDelayed(MainActivity.this::loadQuestion, 3000);
                     });
@@ -217,10 +244,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void submitAnswer(String playerAnswer) {
+        if (!quizStarted) {
+            Toast.makeText(this, "Quiz has not started yet.", Toast.LENGTH_SHORT).show();
+            return;
+        }
         if (hasSubmitted || remainingTimeSeconds <= 0 || currentQuestionId == null || currentQuestionId.isEmpty()) {
             Toast.makeText(this, "Cannot submit answer at this time", Toast.LENGTH_SHORT).show();
             return;
         }
+        disableOptions();
+        hasSubmitted = true;  // Set this flag immediately when the answer is submitted
 
         FormBody formBody = new FormBody.Builder()
                 .add("player", playerName)
@@ -240,23 +273,30 @@ public class MainActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     resultText.setText("Error: " + e.getMessage());
                     Toast.makeText(MainActivity.this, "Submission failed", Toast.LENGTH_SHORT).show();
+                    enableOptions();
+                    hasSubmitted = false;
                 });
             }
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                String responseBody = response.body().string();
-                runOnUiThread(() -> {
-                    resultText.setText(responseBody);
-                    Toast.makeText(MainActivity.this, "Answer submitted", Toast.LENGTH_SHORT).show();
-                    hasSubmitted = true;
-                    optionA.setEnabled(false);
-                    optionB.setEnabled(false);
-                    optionC.setEnabled(false);
-                    optionD.setEnabled(false);
-                    timerHandler.removeCallbacks(timerRunnable);
-                    fetchLeaderboard();
-                });
+                if (response.code() == 409) {
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Answer already submitted.", Toast.LENGTH_SHORT).show());
+                } else {
+                    String responseBody = response.body().string();
+                    runOnUiThread(() -> {
+                        resultText.setText(responseBody);
+                        Toast.makeText(MainActivity.this, "Answer submitted", Toast.LENGTH_SHORT).show();
+//                    hasSubmitted = true;
+//                    optionA.setEnabled(false);
+//                    optionB.setEnabled(false);
+//                    optionC.setEnabled(false);
+//                    optionD.setEnabled(false);
+//                    timerHandler.removeCallbacks(timerRunnable);
+                        fetchLeaderboard();
+                    });
+                }
+
             }
         });
     }

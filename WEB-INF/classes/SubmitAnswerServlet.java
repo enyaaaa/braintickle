@@ -44,7 +44,7 @@ public class SubmitAnswerServlet extends HttpServlet {
             return;
         } catch (IllegalArgumentException e) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            response.getWriter().write("{\"error\":\"Invalid playerAnswer: " + e.getMessage() + "\"}");
+            response.getWriter().write("{\"error\":\"Invalid questionId or playerAnswer: " + e.getMessage() + "\"}");
             return;
         }
 
@@ -62,6 +62,21 @@ public class SubmitAnswerServlet extends HttpServlet {
                         return;
                     }
                 }
+
+                // Check if the player has already answered this question
+            String checkAnswerSql = "SELECT 1 FROM playerAnswers WHERE sessionId = ? AND player = ? AND questionId = ?";
+            try (PreparedStatement checkStmt = conn.prepareStatement(checkAnswerSql)) {
+                checkStmt.setString(1, sessionId);
+                checkStmt.setString(2, player);
+                checkStmt.setInt(3, questionId);
+                ResultSet rs = checkStmt.executeQuery();
+                if (rs.next()) {
+                    response.setStatus(HttpServletResponse.SC_CONFLICT); // Or another appropriate status code
+                    response.getWriter().write("{\"error\":\"Answer already submitted for this question\"}");
+                    return;
+                }
+            }
+
 
                 // Get the correct answer
                 String questionSql = "SELECT answer FROM questions WHERE id = ?";
