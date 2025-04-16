@@ -1,121 +1,228 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:background="#FFFFFFFF"
-    android:gravity="center">
+    android:background="#FFFFFFFF">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="BrainTickle"
-        android:textSize="32sp"
-        android:textColor="#FF8ea1b5"
-        android:layout_marginBottom="20dp"/>
-
-    <TextView
-        android:id="@+id/sessionInfoText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Session ID: 1"
-        android:textSize="18sp"
-        android:textColor="#FFb8b2c3"
-        android:layout_marginBottom="10dp"/>
-
-    <TextView
-        android:id="@+id/sessionStatusText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textSize="18sp"
-        android:textColor="#FFb8b2c3"
-        android:layout_marginBottom="10dp"/>
-
-    <TextView
-        android:id="@+id/questionTypeText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="General Knowledge"
-        android:textSize="18sp"
-        android:textColor="#FFb8b2c3"
-        android:layout_marginBottom="10dp"/>
-
-    <TextView
-        android:id="@+id/questionText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Loading..."
-        android:textSize="24sp"
-        android:textColor="#FF333333"
-        android:layout_marginBottom="10dp"/>
-
+    <!-- Background Image -->
     <ImageView
-        android:id="@+id/questionImage"
+        android:id="@+id/backgroundImage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/background"
+        android:scaleType="centerCrop"
+        android:adjustViewBounds="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Card-like container for content -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/cardContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:layout_marginBottom="10dp"/>
+        android:background="#FFFFFFFF"
+        android:padding="20dp"
+        android:layout_marginHorizontal="20dp"
+        android:elevation="4dp"
+        android:clipToPadding="false"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-    <Button
-        android:id="@+id/optionA"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="A: Loading..."
-        android:backgroundTint="#FFb8b2c3"
-        android:textColor="#FF333333"
-        android:layout_marginBottom="10dp"/>
+        <!-- Logo Image -->
+        <ImageView
+            android:id="@+id/logoImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/logo"
+            android:adjustViewBounds="true"
+            android:maxWidth="300dp"
+            android:layout_marginBottom="20dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-    <Button
-        android:id="@+id/optionB"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="B: Loading..."
-        android:backgroundTint="#FFc49ba3"
-        android:textColor="#FF333333"
-        android:layout_marginBottom="10dp"/>
+        <TextView
+            android:id="@+id/sessionInfoText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Session ID: 1"
+            android:textSize="18sp"
+            android:textColor="#666666"
+            android:fontFamily="@font/poppins"
+            android:layout_marginBottom="10dp"
+            app:layout_constraintTop_toBottomOf="@id/logoImage"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-    <Button
-        android:id="@+id/optionC"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="C: Loading..."
-        android:backgroundTint="#FFb3c2a1"
-        android:textColor="#FF333333"
-        android:layout_marginBottom="10dp"/>
+        <TextView
+            android:id="@+id/sessionStatusText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="18sp"
+            android:textColor="#666666"
+            android:fontFamily="@font/poppins"
+            android:layout_marginBottom="10dp"
+            app:layout_constraintTop_toBottomOf="@id/sessionInfoText"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-    <Button
-        android:id="@+id/optionD"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="D: Loading..."
-        android:backgroundTint="#FFdfe5d9"
-        android:textColor="#FF333333"
-        android:layout_marginBottom="10dp"/>
+        <TextView
+            android:id="@+id/questionTypeText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="18sp"
+            android:textColor="#666666"
+            android:fontFamily="@font/poppins"
+            android:layout_marginBottom="10dp"
+            app:layout_constraintTop_toBottomOf="@id/sessionStatusText"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-    <Button
-        android:id="@+id/showLeaderboardButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Show Leaderboard"
-        android:backgroundTint="#FFff6f91"
-        android:textColor="#FFFFFFFF"
-        android:layout_marginBottom="10dp"
-        android:visibility="gone"/>
+        <TextView
+            android:id="@+id/questionText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="18sp"
+            android:textColor="#333333"
+            android:fontFamily="@font/poppins"
+            android:layout_marginBottom="20dp"
+            app:layout_constraintTop_toBottomOf="@id/questionTypeText"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/leaderboardRecyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:layout_marginBottom="10dp"/>
+        <ImageView
+            android:id="@+id/questionImage"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_marginBottom="10dp"
+            app:layout_constraintTop_toBottomOf="@id/questionText"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-    <TextView
-        android:id="@+id/resultText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text=""
-        android:textSize="18sp"
-        android:textColor="#FF333333"/>
-</LinearLayout>
+        <Button
+            android:id="@+id/optionA"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="1"
+            android:backgroundTint="#B5C0D0"
+            android:textColor="#333333"
+            android:textSize="18sp"
+            android:fontFamily="@font/poppins"
+            android:padding="15dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginHorizontal="5dp"
+            android:elevation="2dp"
+            android:stateListAnimator="@null"
+            app:layout_constraintTop_toBottomOf="@id/questionImage"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <Button
+            android:id="@+id/optionB"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="2"
+            android:backgroundTint="#CCD3CA"
+            android:textColor="#333333"
+            android:textSize="18sp"
+            android:fontFamily="@font/poppins"
+            android:padding="15dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginHorizontal="5dp"
+            android:elevation="2dp"
+            android:stateListAnimator="@null"
+            app:layout_constraintTop_toBottomOf="@id/optionA"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <Button
+            android:id="@+id/optionC"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="3"
+            android:backgroundTint="#F5E8DD"
+            android:textColor="#333333"
+            android:textSize="18sp"
+            android:fontFamily="@font/poppins"
+            android:padding="15dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginHorizontal="5dp"
+            android:elevation="2dp"
+            android:stateListAnimator="@null"
+            app:layout_constraintTop_toBottomOf="@id/optionB"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <Button
+            android:id="@+id/optionD"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="4"
+            android:backgroundTint="#EED3D9"
+            android:textColor="#333333"
+            android:textSize="18sp"
+            android:fontFamily="@font/poppins"
+            android:padding="15dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginHorizontal="5dp"
+            android:elevation="2dp"
+            android:stateListAnimator="@null"
+            app:layout_constraintTop_toBottomOf="@id/optionC"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <Button
+            android:id="@+id/showLeaderboardButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Show Leaderboard"
+            android:backgroundTint="#CCD3CA"
+            android:textColor="#666666"
+            android:textSize="16sp"
+            android:fontFamily="@font/poppins"
+            android:padding="12dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginHorizontal="5dp"
+            android:elevation="2dp"
+            android:visibility="gone"
+            android:stateListAnimator="@null"
+            app:layout_constraintTop_toBottomOf="@id/optionD"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/leaderboardRecyclerView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:layout_marginBottom="10dp"
+            android:background="#FFFFFFFF"
+            android:padding="10dp"
+            app:layout_constraintTop_toBottomOf="@id/showLeaderboardButton"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <TextView
+            android:id="@+id/resultText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="18sp"
+            android:textColor="#333333"
+            android:fontFamily="@font/poppins"
+            app:layout_constraintTop_toBottomOf="@id/leaderboardRecyclerView"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

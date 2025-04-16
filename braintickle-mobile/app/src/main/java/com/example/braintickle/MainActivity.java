@@ -125,12 +125,12 @@ public class MainActivity extends AppCompatActivity {
                         String message = data.getString("message");
                         if (message.equals("Waiting for teacher to start quiz.")) {
                             runOnUiThread(() -> {
-                                questionText.setText(message);
+                                questionText.setText("Quiz has not started.");
                                 questionTypeText.setText("");
-                                optionA.setText("A:");
-                                optionB.setText("B:");
-                                optionC.setText("C:");
-                                optionD.setText("D:");
+                                optionA.setText("1");
+                                optionB.setText("2");
+                                optionC.setText("3");
+                                optionD.setText("4");
                             });
                             // Retry after 3 seconds
                             new Handler(Looper.getMainLooper()).postDelayed(MainActivity.this::loadQuestion, 3000);
@@ -141,10 +141,10 @@ public class MainActivity extends AppCompatActivity {
                                 sessionStatusText.setText("Session Ended");
                                 questionText.setText("Session ended.");
                                 questionTypeText.setText("");
-                                optionA.setText("A:");
-                                optionB.setText("B:");
-                                optionC.setText("C:");
-                                optionD.setText("D:");
+                                optionA.setText("1");
+                                optionB.setText("2");
+                                optionC.setText("3");
+                                optionD.setText("4");
                                 resultText.setText("Quiz session has ended.");
                                 showLeaderboardButton.setVisibility(View.VISIBLE);
                                 fetchLeaderboard(); // Fetch final leaderboard
@@ -267,13 +267,13 @@ public class MainActivity extends AppCompatActivity {
             leaderboardRecyclerView.setVisibility(View.GONE);
             showLeaderboardButton.setText("Show Leaderboard");
             isLeaderboardVisible = false;
-            leaderboardHandler.removeCallbacks(leaderboardRunnable); // Fixed typo
+            leaderboardHandler.removeCallbacks(leaderboardRunnable);
         } else {
             leaderboardRecyclerView.setVisibility(View.VISIBLE);
             showLeaderboardButton.setText("Hide Leaderboard");
             isLeaderboardVisible = true;
             fetchLeaderboard();
-            leaderboardHandler.post(leaderboardRunnable); // Fixed typo
+            leaderboardHandler.post(leaderboardRunnable);
         }
     }
 

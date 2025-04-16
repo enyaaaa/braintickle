@@ -69,19 +69,32 @@
             /* Fixed width for consistency */
             margin: 10px auto;
             /* Center buttons with auto horizontal margins */
-            background: #9daf88;
+            background: #CCD3CA;
             border: none;
             padding: 12px 25px;
             font-size: 16px;
             font-weight: bold;
-            color: #fff;
+            color: #666;
             cursor: pointer;
             border-radius: 25px;
             transition: background 0.3s ease;
         }
 
         .category-selection button:hover {
-            background: #6f7a61;
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+        .category-selection button.math {
+            background: #B5C0D0;
+        }
+        .category-selection button.science {
+            background: #CCD3CA;
+        }
+        .category-selection button.general {
+            background: #F5E8DD;
+        }
+        .category-selection button.geography {
+            background: #EED3D9;
         }
 
         .category-selection,
@@ -96,12 +109,12 @@
         }
 
         button {
-            background: #9daf88;
+            background: #CCD3CA;
             border: none;
             padding: 12px 25px;
             font-size: 16px;
             font-weight: bold;
-            color: #fff;
+            color: #666;
             cursor: pointer;
             border-radius: 25px;
             margin: 8px;
@@ -109,7 +122,7 @@
         }
 
         button:hover {
-            background: #6f7a61;
+            background: rgb(91, 99, 80);
         }
 
         .timer-container {
@@ -122,7 +135,7 @@
         .timer-circle {
             width: 100%;
             height: 100%;
-            border: 8px solid #9daf88;
+            border: 8px solid #CCD3CA;
             border-radius: 50%;
             display: flex;
             justify-content: center;
@@ -226,9 +239,10 @@
         <!-- Category Selection -->
         <div id="categorySelection" class="category-selection">
             <h2>Select a Category</h2>
-            <button onclick="startSession('math')">Math</button>
-            <button onclick="startSession('science')">Science</button>
-            <button onclick="startSession('general')">General Knowledge</button>
+            <button class="math" onclick="startSession('math')">Math</button>
+            <button class="science" onclick="startSession('science')">Science</button>
+            <button class="general" onclick="startSession('general')">General</button>
+            <button class="geography" onclick="startSession('geography')">Geography</button>
         </div>
 
         <!-- Session Info -->
