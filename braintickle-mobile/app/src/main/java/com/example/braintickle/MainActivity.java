@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
     private final int TOTAL_QUESTIONS = 7; // Match with quiz.html
     private final String SERVER_URL = "http://10.0.2.2:9999/braintickle/submitAnswer";
     private final String DISPLAY_URL = "http://10.0.2.2:9999/braintickle/displayResults?sessionId=";
-    private final String LEADERBOARD_URL = "http://10.0.2.2:9999/braintickle/getLeaderboard?sessionId=";
+    private final String LEADERBOARD_URL = "http://10.0.2.2:9999/braintickle/getResults?sessionId=";
     private OkHttpClient client;
     private Handler timerHandler;
     private Runnable timerRunnable;

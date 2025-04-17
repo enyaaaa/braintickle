@@ -5,63 +5,74 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@WebServlet("/braintickle/getLeaderboard")
+@WebServlet("/getLeaderboard")
 public class GetLeaderboardServlet extends HttpServlet {
-    private static final long serialVersionUID = 1L;
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/braintickle";
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "MySecurePassword";
 
     @Override
-    public void init() throws ServletException {
-        super.init();
-        System.out.println("GetLeaderboardServlet initialized");
-    }
-
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        System.out.println("Received request for /braintickle/getLeaderboard");
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         String sessionId = request.getParameter("sessionId");
-        response.setContentType("text/plain");
-        response.setHeader("Access-Control-Allow-Origin", "*");
-        response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+        // Validate sessionId parameter
+        if (sessionId == null || sessionId.trim().isEmpty()) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("Missing sessionId");
+            return;
+        }
 
         try {
-            System.out.println("Loading MySQL driver...");
             Class.forName("com.mysql.cj.jdbc.Driver");
-            System.out.println("Connecting to database...");
-            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/braintickle", "root", "MySecurePassword");
-            System.out.println("Database connection established");
+            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+                // Query to get all players in the session
+                String allPlayersSql = "SELECT DISTINCT player FROM playerAnswers WHERE sessionId = ?";
+                try (PreparedStatement stmt = conn.prepareStatement(allPlayersSql)) {
+                    stmt.setString(1, sessionId);
+                    ResultSet rs = stmt.executeQuery();
 
-            PreparedStatement stmt = conn.prepareStatement(
-                "SELECT player, COUNT(*) as score " +
-                "FROM playerAnswers " +
-                "WHERE sessionId = ? AND isCorrect = 1 " +
-                "GROUP BY player " +
-                "ORDER BY score DESC"
-            );
-            stmt.setString(1, sessionId);
-            ResultSet rs = stmt.executeQuery();
+                    StringBuilder leaderboard = new StringBuilder();
+                    while (rs.next()) {
+                        String player = rs.getString("player");
 
-            StringBuilder leaderboard = new StringBuilder();
-            while (rs.next()) {
-                String player = rs.getString("player");
-                int score = rs.getInt("score") * 100;
-                if (leaderboard.length() > 0) {
-                    leaderboard.append("|");
+                        // Query to count correct answers for this player
+                        String scoreSql = "SELECT COUNT(*) as score FROM playerAnswers WHERE sessionId = ? AND player = ? AND isCorrect = 1";
+                        try (PreparedStatement scoreStmt = conn.prepareStatement(scoreSql)) {
+                            scoreStmt.setString(1, sessionId);
+                            scoreStmt.setString(2, player);
+                            ResultSet scoreRs = scoreStmt.executeQuery();
+                            int score = 0;
+                            if (scoreRs.next()) {
+                                score = scoreRs.getInt("score") * 100; // 100 points per correct answer
+                            }
+
+                            if (leaderboard.length() > 0) {
+                                leaderboard.append("|");
+                            }
+                            leaderboard.append(player).append(":").append(score);
+                        }
+                    }
+
+                    // If no players, return "No scores yet"
+                    response.setContentType("text/plain");
+                    response.getWriter().write(leaderboard.length() > 0 ? leaderboard.toString() : "No scores yet");
                 }
-                leaderboard.append(player).append(":").append(score);
             }
-
-            response.getWriter().write(leaderboard.length() > 0 ? leaderboard.toString() : "No scores yet");
-            conn.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("Error in GetLeaderboardServlet: " + e.getMessage());
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error fetching leaderboard: " + e.getMessage());
+        } catch (ClassNotFoundException e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("Database driver not found: " + e.getMessage());
+        } catch (SQLException e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("Database error: " + e.getMessage());
         }
     }
 }

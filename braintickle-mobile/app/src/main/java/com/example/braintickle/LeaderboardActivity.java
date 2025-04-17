@@ -21,7 +21,7 @@ public class LeaderboardActivity extends AppCompatActivity {
     private RecyclerView leaderboardRecyclerView;
     private LeaderboardAdapter leaderboardAdapter;
     private OkHttpClient client = new OkHttpClient();
-    private final String LEADERBOARD_URL = "http://10.0.2.2:9999/braintickle/getLeaderboard?sessionId=";
+    private final String LEADERBOARD_URL = "http://10.0.2.2:9999/braintickle/getResults?sessionId=";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
