@@ -13,6 +13,7 @@ This project was done for IM2073 - Intro to Design & Project (mobile programming
     - Player name
   - View Quesiton
     - Show question with 4 options and a timer synced up with both web and mobile
+    - Feedback message correct, incorrect or time's up
     - Next question button appear when timer is up
   - Leaderboard
     - Final score will be shown after answers 5 question of that category
